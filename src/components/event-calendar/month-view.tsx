@@ -34,10 +34,26 @@ import {
 } from "@/components/event-calendar";
 import { DefaultStartHour } from "@/components/event-calendar/constants";
 
+/**
+ * 月表示（MonthView）コンポーネント
+ *
+ * - 指定月をカレンダーグリッド（週 x 7日）で描画し、その日のイベントを表示します。
+ * - 終日/マルチデイのスパン表示に対応し、はみ出す分は「+N more」でポップオーバーに格納します。
+ * - DnD: 初日セルでは `DraggableEvent` を表示、2日目以降のスパンは読み取り専用表示（`EventItem`）に。
+ * - セルクリックで新規イベント作成（`DefaultStartHour`）をトリガーします。
+ *
+ * @remarks
+ * - レイアウトの高さ計算には `useEventVisibility` を使用し、表示できる件数を算出します。
+ * - グリッドは当月外の日も含めて週単位で埋め、当月外セルには `data-outside-cell` を付与します。
+ */
 interface MonthViewProps {
+  /** 表示基準日（この日を含む月を表示） */
   currentDate: Date;
+  /** すべてのイベント配列（本コンポーネント側で日別抽出） */
   events: CalendarEvent[];
+  /** イベント選択（クリック）時に親へ通知 */
   onEventSelect: (event: CalendarEvent) => void;
+  /** セルクリックで新規作成する際、開始日時を親へ通知 */
   onEventCreate: (startTime: Date) => void;
 }
 
@@ -47,6 +63,10 @@ export function MonthView({
   onEventSelect,
   onEventCreate,
 }: MonthViewProps) {
+  /**
+   * 月ビューに表示する日付の配列
+   * - 月初〜月末を含む週の始まり/終わりで拡張し、完全な週グリッドに整形
+   */
   const days = useMemo(() => {
     const monthStart = startOfMonth(currentDate);
     const monthEnd = endOfMonth(monthStart);
@@ -56,6 +76,9 @@ export function MonthView({
     return eachDayOfInterval({ start: calendarStart, end: calendarEnd });
   }, [currentDate]);
 
+  /**
+   * 曜日ヘッダー（Sun〜Sat）
+   */
   const weekdays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => {
       const date = addDays(startOfWeek(new Date()), i);
@@ -63,6 +86,9 @@ export function MonthView({
     });
   }, []);
 
+  /**
+   * days を 7 日ずつに分割して週配列へ
+   */
   const weeks = useMemo(() => {
     const result = [];
     let week = [];
@@ -78,12 +104,24 @@ export function MonthView({
     return result;
   }, [days]);
 
+  /**
+   * イベントクリック時：親へ通知＋バブリング抑止
+   */
   const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
     e.stopPropagation();
     onEventSelect(event);
   };
 
+  /**
+   * レイアウト測定の初回完了フラグ（SSR/初期レンダと ResizeObserver のズレ回避）
+   */
   const [isMounted, setIsMounted] = useState(false);
+
+  /**
+   * useEventVisibility:
+   * - 参照セル（最初のセル）でコンテナ高さを測定し、表示可能なイベント数を計算
+   * - `EventHeight` と `EventGap` を使って「見える数」を求める
+   */
   const { contentRef, getVisibleEventCount } = useEventVisibility({
     eventHeight: EventHeight,
     eventGap: EventGap,
@@ -95,6 +133,7 @@ export function MonthView({
 
   return (
     <div data-slot="month-view" className="contents">
+      {/* 曜日ヘッダー */}
       <div className="border-border/70 grid grid-cols-7 border-y uppercase">
         {weekdays.map((day) => (
           <div
@@ -105,6 +144,8 @@ export function MonthView({
           </div>
         ))}
       </div>
+
+      {/* 週ごとのグリッド */}
       <div className="grid flex-1 auto-rows-fr">
         {weeks.map((week, weekIndex) => (
           <div
@@ -112,19 +153,22 @@ export function MonthView({
             className="grid grid-cols-7 [&:last-child>*]:border-b-0"
           >
             {week.map((day, dayIndex) => {
-              if (!day) return null; // Skip if day is undefined
+              if (!day) return null;
 
+              // 当日のイベント抽出
               const dayEvents = getEventsForDay(events, day);
-              const spanningEvents = getSpanningEventsForDay(events, day);
+              const spanningEvents = getSpanningEventsForDay(events, day); // マルチデイ・終日
               const isCurrentMonth = isSameMonth(day, currentDate);
               const cellId = `month-cell-${day.toISOString()}`;
-              const allDayEvents = [...spanningEvents, ...dayEvents];
-              const allEvents = getAllEventsForDay(events, day);
+              const allDayEvents = [...spanningEvents, ...dayEvents]; // 上段に表示するグループ
+              const allEvents = getAllEventsForDay(events, day); // "more" ポップオーバー用の完全版
 
+              // 最初のセルのみ高さ測定の参照にする
               const isReferenceCell = weekIndex === 0 && dayIndex === 0;
               const visibleCount = isMounted
                 ? getVisibleEventCount(allDayEvents.length)
                 : undefined;
+
               const hasMore =
                 visibleCount !== undefined &&
                 allDayEvents.length > visibleCount;
@@ -139,6 +183,7 @@ export function MonthView({
                   data-today={isToday(day) || undefined}
                   data-outside-cell={!isCurrentMonth || undefined}
                 >
+                  {/* セル本体（クリックで新規作成） */}
                   <DroppableCell
                     id={cellId}
                     date={day}
@@ -148,9 +193,12 @@ export function MonthView({
                       onEventCreate(startTime);
                     }}
                   >
+                    {/* 日付バッジ */}
                     <div className="group-data-today:bg-primary group-data-today:text-primary-foreground mt-1 inline-flex size-6 items-center justify-center rounded-full text-sm">
                       {format(day, "d")}
                     </div>
+
+                    {/* イベント表示域（参照セルにだけ ref を付与） */}
                     <div
                       ref={isReferenceCell ? contentRef : null}
                       className="min-h-[calc((var(--event-height)+var(--event-gap))*2)] sm:min-h-[calc((var(--event-height)+var(--event-gap))*3)] lg:min-h-[calc((var(--event-height)+var(--event-gap))*4)]"
@@ -161,15 +209,18 @@ export function MonthView({
                         const isFirstDay = isSameDay(day, eventStart);
                         const isLastDay = isSameDay(day, eventEnd);
 
+                        // 「見える数」を超えるものは aria-hidden で隠す
                         const isHidden =
                           isMounted && visibleCount && index >= visibleCount;
-
                         if (!visibleCount) return null;
 
+                        // スパン2日目以降は読み取り用の EventItem（ドラッグ不可）
                         if (!isFirstDay) {
                           return (
                             <div
-                              key={`spanning-${event.id}-${day.toISOString().slice(0, 10)}`}
+                              key={`spanning-${event.id}-${day
+                                .toISOString()
+                                .slice(0, 10)}`}
                               className="aria-hidden:hidden"
                               aria-hidden={isHidden ? "true" : undefined}
                             >
@@ -180,13 +231,11 @@ export function MonthView({
                                 isFirstDay={isFirstDay}
                                 isLastDay={isLastDay}
                               >
+                                {/* 見た目合わせの不可視内容（高さを揃える） */}
                                 <div className="invisible" aria-hidden={true}>
                                   {!event.allDay && (
                                     <span>
-                                      {format(
-                                        new Date(event.start),
-                                        "h:mm",
-                                      )}{" "}
+                                      {format(new Date(event.start), "h:mm")}{" "}
                                     </span>
                                   )}
                                   {event.title}
@@ -196,6 +245,7 @@ export function MonthView({
                           );
                         }
 
+                        // 初日はドラッグ可能
                         return (
                           <div
                             key={event.id}
@@ -213,6 +263,7 @@ export function MonthView({
                         );
                       })}
 
+                      {/* +N more（ポップオーバーで全件表示） */}
                       {hasMore && (
                         <Popover modal>
                           <PopoverTrigger asChild>

@@ -20,6 +20,10 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 
+/**
+ * サイドバー内に表示するユーザー情報＆メニュー
+ * @param user ユーザーの名前・メール・アバター画像URL
+ */
 export function NavUser({
   user,
 }: {
@@ -32,22 +36,31 @@ export function NavUser({
   return (
     <SidebarMenu>
       <SidebarMenuItem>
+        {/* ドロップダウンメニュー全体 */}
         <DropdownMenu>
+          {/* トリガー部分（クリックで開く） */}
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size="lg"
               className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground [&>svg]:size-5"
             >
+              {/* ユーザーのアバター画像 */}
               <Avatar className="size-8">
                 <AvatarImage src={user.avatar} alt={user.name} />
                 <AvatarFallback className="rounded-lg">S</AvatarFallback>
               </Avatar>
+
+              {/* ユーザー名 */}
               <div className="grid flex-1 text-left text-sm leading-tight">
                 <span className="truncate font-medium">{user.name}</span>
               </div>
+
+              {/* 開閉アイコン */}
               <RiExpandUpDownLine className="ml-auto size-5 text-muted-foreground/80" />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
+
+          {/* ドロップダウンの中身 */}
           <DropdownMenuContent
             className="w-(--radix-dropdown-menu-trigger-width) dark bg-sidebar"
             side="bottom"

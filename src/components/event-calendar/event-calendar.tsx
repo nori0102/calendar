@@ -48,12 +48,50 @@ import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import ThemeToggle from "@/components/theme-toggle";
 import Participants from "@/components/participants";
 
+/**
+ * カレンダー UI のルートコンポーネント。
+ * 月/週/日/アジェンダの各ビューを切り替え、イベントの追加・更新・削除をハンドリングします。
+ *
+ * - **ビュー切替**: ヘッダーのドロップダウンまたはキーボード（M/W/D/A）。
+ * - **ナビゲーション**: 前/次/Today ボタンで基準日を移動。
+ * - **作成**: 空き枠クリックまたは「New Event」から作成ダイアログを開く（15分刻みにスナップ）。
+ * - **編集**: イベントクリックで編集ダイアログ、DnD で時間/日付移動（`CalendarDndProvider` 経由）。
+ * - **通知**: 追加/更新/削除/移動時に `sonner` でトースト表示。
+ *
+ * @remarks
+ * - 日付状態は共有の {@link useCalendarContext} を利用（親で `CalendarProvider` が必要）。
+ * - DnD の処理は {@link CalendarDndProvider} 内で完結。ドロップ時は `onEventUpdate` が呼ばれます。
+ * - ビュー別のヘッダタイトル（`viewTitle`）は `date-fns` で整形。ローカライズが必要なら `format` に `locale` を渡してください。
+ * - スタイルは CSS 変数 `--event-height` / `--event-gap` / `--week-cells-height` をルート要素に設定し、子コンポーネントで参照します。
+ *
+ * @keyboard
+ * - `M` = Month, `W` = Week, `D` = Day, `A` = Agenda（入力中やダイアログ表示中は無効）
+ *
+ * @example
+ * ```tsx
+ * <CalendarProvider>
+ *   <EventCalendar
+ *     events={events}
+ *     onEventAdd={(e) => setEvents([...events, e])}
+ *     onEventUpdate={(e) => setEvents(events.map(x => x.id === e.id ? e : x))}
+ *     onEventDelete={(id) => setEvents(events.filter(x => x.id !== id))}
+ *     initialView="month"
+ *   />
+ * </CalendarProvider>
+ * ```
+ */
 export interface EventCalendarProps {
+  /** 描画対象のイベント配列 */
   events?: CalendarEvent[];
+  /** 追加（作成ダイアログの保存時 or 直接作成） */
   onEventAdd?: (event: CalendarEvent) => void;
+  /** 更新（編集ダイアログ保存 or DnD での移動） */
   onEventUpdate?: (event: CalendarEvent) => void;
+  /** 削除（編集ダイアログから） */
   onEventDelete?: (eventId: string) => void;
+  /** ルート要素に付与する追加クラス */
   className?: string;
+  /** 初期表示ビュー（既定: "month"） */
   initialView?: CalendarView;
 }
 
@@ -65,20 +103,22 @@ export function EventCalendar({
   className,
   initialView = "month",
 }: EventCalendarProps) {
-  // Use the shared calendar context instead of local state
+  // 共有カレンダー状態（基準日）
   const { currentDate, setCurrentDate } = useCalendarContext();
+
+  // 現在のビュー
   const [view, setView] = useState<CalendarView>(initialView);
+
+  // イベント編集ダイアログの状態
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
-    null,
+    null
   );
   const { open } = useSidebar();
 
-  // Add keyboard shortcuts for view switching
+  // ビュー切替のキーボードショートカット（入力中/ダイアログ時は無効）
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if user is typing in an input, textarea or contentEditable element
-      // or if the event dialog is open
       if (
         isEventDialogOpen ||
         e.target instanceof HTMLInputElement ||
@@ -87,7 +127,6 @@ export function EventCalendar({
       ) {
         return;
       }
-
       switch (e.key.toLowerCase()) {
         case "m":
           setView("month");
@@ -103,68 +142,50 @@ export function EventCalendar({
           break;
       }
     };
-
     window.addEventListener("keydown", handleKeyDown);
-
-    return () => {
-      window.removeEventListener("keydown", handleKeyDown);
-    };
+    return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isEventDialogOpen]);
 
+  // ナビゲーション: 前へ
   const handlePrevious = () => {
-    if (view === "month") {
-      setCurrentDate(subMonths(currentDate, 1));
-    } else if (view === "week") {
-      setCurrentDate(subWeeks(currentDate, 1));
-    } else if (view === "day") {
-      setCurrentDate(addDays(currentDate, -1));
-    } else if (view === "agenda") {
-      // For agenda view, go back 30 days (a full month)
+    if (view === "month") setCurrentDate(subMonths(currentDate, 1));
+    else if (view === "week") setCurrentDate(subWeeks(currentDate, 1));
+    else if (view === "day") setCurrentDate(addDays(currentDate, -1));
+    else if (view === "agenda")
       setCurrentDate(addDays(currentDate, -AgendaDaysToShow));
-    }
   };
 
+  // ナビゲーション: 次へ
   const handleNext = () => {
-    if (view === "month") {
-      setCurrentDate(addMonths(currentDate, 1));
-    } else if (view === "week") {
-      setCurrentDate(addWeeks(currentDate, 1));
-    } else if (view === "day") {
-      setCurrentDate(addDays(currentDate, 1));
-    } else if (view === "agenda") {
-      // For agenda view, go forward 30 days (a full month)
+    if (view === "month") setCurrentDate(addMonths(currentDate, 1));
+    else if (view === "week") setCurrentDate(addWeeks(currentDate, 1));
+    else if (view === "day") setCurrentDate(addDays(currentDate, 1));
+    else if (view === "agenda")
       setCurrentDate(addDays(currentDate, AgendaDaysToShow));
-    }
   };
 
-  const handleToday = () => {
-    setCurrentDate(new Date());
-  };
+  // Today へ
+  const handleToday = () => setCurrentDate(new Date());
 
+  // イベント選択（編集ダイアログを開く）
   const handleEventSelect = (event: CalendarEvent) => {
-    console.log("Event selected:", event); // Debug log
+    console.log("Event selected:", event);
     setSelectedEvent(event);
     setIsEventDialogOpen(true);
   };
 
+  // 空き枠クリックで新規作成（15分刻みにスナップ）
   const handleEventCreate = (startTime: Date) => {
-    console.log("Creating new event at:", startTime); // Debug log
-
-    // Snap to 15-minute intervals
+    console.log("Creating new event at:", startTime);
     const minutes = startTime.getMinutes();
     const remainder = minutes % 15;
     if (remainder !== 0) {
-      if (remainder < 7.5) {
-        // Round down to nearest 15 min
-        startTime.setMinutes(minutes - remainder);
-      } else {
-        // Round up to nearest 15 min
-        startTime.setMinutes(minutes + (15 - remainder));
-      }
+      startTime.setMinutes(
+        remainder < 7.5 ? minutes - remainder : minutes + (15 - remainder)
+      );
       startTime.setSeconds(0);
       startTime.setMilliseconds(0);
     }
-
     const newEvent: CalendarEvent = {
       id: "",
       title: "",
@@ -176,10 +197,10 @@ export function EventCalendar({
     setIsEventDialogOpen(true);
   };
 
+  // ダイアログ保存（新規 or 既存）
   const handleEventSave = (event: CalendarEvent) => {
     if (event.id) {
       onEventUpdate?.(event);
-      // Show toast notification when an event is updated
       toast(`Event "${event.title}" updated`, {
         description: format(new Date(event.start), "MMM d, yyyy"),
         position: "bottom-left",
@@ -189,7 +210,6 @@ export function EventCalendar({
         ...event,
         id: Math.random().toString(36).substring(2, 11),
       });
-      // Show toast notification when an event is added
       toast(`Event "${event.title}" added`, {
         description: format(new Date(event.start), "MMM d, yyyy"),
         position: "bottom-left",
@@ -199,13 +219,12 @@ export function EventCalendar({
     setSelectedEvent(null);
   };
 
+  // ダイアログから削除
   const handleEventDelete = (eventId: string) => {
     const deletedEvent = events.find((e) => e.id === eventId);
     onEventDelete?.(eventId);
     setIsEventDialogOpen(false);
     setSelectedEvent(null);
-
-    // Show toast notification when an event is deleted
     if (deletedEvent) {
       toast(`Event "${deletedEvent.title}" deleted`, {
         description: format(new Date(deletedEvent.start), "MMM d, yyyy"),
@@ -214,27 +233,25 @@ export function EventCalendar({
     }
   };
 
+  // DnD による移動（CalendarDndProvider から呼ばれる）
   const handleEventUpdate = (updatedEvent: CalendarEvent) => {
     onEventUpdate?.(updatedEvent);
-
-    // Show toast notification when an event is updated via drag and drop
     toast(`Event "${updatedEvent.title}" moved`, {
       description: format(new Date(updatedEvent.start), "MMM d, yyyy"),
       position: "bottom-left",
     });
   };
 
+  // ヘッダタイトル（ビューごとに表示）
   const viewTitle = useMemo(() => {
     if (view === "month") {
       return format(currentDate, "MMMM yyyy");
     } else if (view === "week") {
       const start = startOfWeek(currentDate, { weekStartsOn: 0 });
       const end = endOfWeek(currentDate, { weekStartsOn: 0 });
-      if (isSameMonth(start, end)) {
-        return format(start, "MMMM yyyy");
-      } else {
-        return `${format(start, "MMM")} - ${format(end, "MMM yyyy")}`;
-      }
+      return isSameMonth(start, end)
+        ? format(start, "MMMM yyyy")
+        : `${format(start, "MMM")} - ${format(end, "MMM yyyy")}`;
     } else if (view === "day") {
       return (
         <>
@@ -250,15 +267,11 @@ export function EventCalendar({
         </>
       );
     } else if (view === "agenda") {
-      // Show the month range for agenda view
       const start = currentDate;
       const end = addDays(currentDate, AgendaDaysToShow - 1);
-
-      if (isSameMonth(start, end)) {
-        return format(start, "MMMM yyyy");
-      } else {
-        return `${format(start, "MMM")} - ${format(end, "MMM yyyy")}`;
-      }
+      return isSameMonth(start, end)
+        ? format(start, "MMMM yyyy")
+        : `${format(start, "MMM")} - ${format(end, "MMM yyyy")}`;
     } else {
       return format(currentDate, "MMMM yyyy");
     }
@@ -276,10 +289,11 @@ export function EventCalendar({
       }
     >
       <CalendarDndProvider onEventUpdate={handleEventUpdate}>
+        {/* Header */}
         <div
           className={cn(
             "flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-5 sm:px-4",
-            className,
+            className
           )}
         >
           <div className="flex sm:flex-col max-sm:items-center justify-between gap-1.5">
@@ -295,6 +309,7 @@ export function EventCalendar({
             </div>
             <Participants />
           </div>
+
           <div className="flex items-center justify-between gap-2">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center sm:gap-2 max-sm:order-1">
@@ -324,17 +339,19 @@ export function EventCalendar({
                 Today
               </Button>
             </div>
+
             <div className="flex items-center justify-between gap-2">
               <Button
                 variant="outline"
                 className="max-sm:h-8 max-sm:px-2.5!"
                 onClick={() => {
-                  setSelectedEvent(null); // Ensure we're creating a new event
+                  setSelectedEvent(null);
                   setIsEventDialogOpen(true);
                 }}
               >
                 New Event
               </Button>
+
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
@@ -364,11 +381,13 @@ export function EventCalendar({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
+
               <ThemeToggle />
             </div>
           </div>
         </div>
 
+        {/* Body */}
         <div className="flex flex-1 flex-col">
           {view === "month" && (
             <MonthView
@@ -403,6 +422,7 @@ export function EventCalendar({
           )}
         </div>
 
+        {/* Dialog */}
         <EventDialog
           event={selectedEvent}
           isOpen={isEventDialogOpen}

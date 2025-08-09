@@ -30,6 +30,14 @@ import {
 import { StartHour, EndHour } from "@/components/event-calendar/constants";
 import { cn } from "@/lib/utils";
 
+/**
+ * 週表示ビューのプロパティ
+ *
+ * @property currentDate - 表示基準日（この日を含む週を描画）
+ * @property events - すべてのイベント配列（本コンポーネントで週/日別にフィルタ）
+ * @property onEventSelect - イベントクリック時のハンドラ
+ * @property onEventCreate - グリッドクリック（15分刻み）で新規作成する開始時刻を通知
+ */
 interface WeekViewProps {
   currentDate: Date;
   events: CalendarEvent[];
@@ -37,32 +45,54 @@ interface WeekViewProps {
   onEventCreate: (startTime: Date) => void;
 }
 
+/** タイムスロット上に配置するための計算済みイベント */
 interface PositionedEvent {
   event: CalendarEvent;
+  /** 上端位置(px)。`StartHour` を 0 として `WeekCellsHeight` を係数に変換 */
   top: number;
+  /** 高さ(px)。イベントの duration を `WeekCellsHeight` でスケール */
   height: number;
+  /** 左位置(0..1)。衝突解消のための列インデックスを % に変換 */
   left: number;
+  /** 幅(0..1)。列数に応じて 1 または 0.9 などに設定 */
   width: number;
+  /** 重なり順 */
   zIndex: number;
 }
 
+/**
+ * # WeekView
+ * カレンダーの**週表示**コンポーネント。
+ *
+ * - 上段：終日/マルチデイイベントの行（タイトルはスパンの初日 or 週の最初の可視日で表示）
+ * - 下段：時間グリッド（`StartHour`〜`EndHour`、15分刻みの Droppable）
+ * - イベントの**重なり解消**は「列割り当て」方式：重なるイベントは別列に配置し、幅/left を調整
+ * - 現在時刻インジケーターをその日の列に描画（`useCurrentTimeIndicator`）
+ *
+ * @remarks
+ * - 描画は Pure 計算の `useMemo` によって最小化。
+ * - 当日だけ赤線インジケーターを描画し、スクロール上でも視認性を確保。
+ */
 export function WeekView({
   currentDate,
   events,
   onEventSelect,
   onEventCreate,
 }: WeekViewProps) {
+  /** 週に含まれる各日（Sun〜Sat） */
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
     const weekEnd = endOfWeek(currentDate, { weekStartsOn: 0 });
     return eachDayOfInterval({ start: weekStart, end: weekEnd });
   }, [currentDate]);
 
+  /** 週の開始日（終日セクションのタイトル表示可否の判定に使用） */
   const weekStart = useMemo(
     () => startOfWeek(currentDate, { weekStartsOn: 0 }),
-    [currentDate],
+    [currentDate]
   );
 
+  /** 時間グリッド（`StartHour`〜`EndHour`、1時間刻み） */
   const hours = useMemo(() => {
     const dayStart = startOfDay(currentDate);
     return eachHourOfInterval({
@@ -71,13 +101,14 @@ export function WeekView({
     });
   }, [currentDate]);
 
-  // Get all-day events and multi-day events for the week
+  /**
+   * 終日/マルチデイのイベント（この週に可視なもの）
+   * - `allDay` または `isMultiDayEvent` を満たす
+   * - 週内のどこか1日に「開始/終了/中日」として引っかかるかで抽出
+   */
   const allDayEvents = useMemo(() => {
     return events
-      .filter((event) => {
-        // Include explicitly marked all-day events or multi-day events
-        return event.allDay || isMultiDayEvent(event);
-      })
+      .filter((event) => event.allDay || isMultiDayEvent(event))
       .filter((event) => {
         const eventStart = new Date(event.start);
         const eventEnd = new Date(event.end);
@@ -85,23 +116,26 @@ export function WeekView({
           (day) =>
             isSameDay(day, eventStart) ||
             isSameDay(day, eventEnd) ||
-            (day > eventStart && day < eventEnd),
+            (day > eventStart && day < eventEnd)
         );
       });
   }, [events, days]);
 
-  // Process events for each day to calculate positions
+  /**
+   * 各日の時間帯イベント（終日/マルチデイを除く）を
+   * - 開始時刻 → duration 長い順 に並べ
+   * - 列割り当て（重なり解消）して `top/height/left/width/zIndex` を計算
+   */
   const processedDayEvents = useMemo(() => {
     const result = days.map((day) => {
-      // Get events for this day that are not all-day events or multi-day events
+      // 1) その日の時間帯イベントを抽出（終日/マルチデイは除外）
       const dayEvents = events.filter((event) => {
-        // Skip all-day events and multi-day events
         if (event.allDay || isMultiDayEvent(event)) return false;
 
         const eventStart = new Date(event.start);
         const eventEnd = new Date(event.end);
 
-        // Check if event is on this day
+        // 当日開始/終了、または当日を跨いでいる（夜間にかかる）ものを含める
         return (
           isSameDay(day, eventStart) ||
           isSameDay(day, eventEnd) ||
@@ -109,35 +143,31 @@ export function WeekView({
         );
       });
 
-      // Sort events by start time and duration
+      // 2) ソート（開始時刻→長い順）
       const sortedEvents = [...dayEvents].sort((a, b) => {
         const aStart = new Date(a.start);
         const bStart = new Date(b.start);
         const aEnd = new Date(a.end);
         const bEnd = new Date(b.end);
 
-        // First sort by start time
         if (aStart < bStart) return -1;
         if (aStart > bStart) return 1;
 
-        // If start times are equal, sort by duration (longer events first)
         const aDuration = differenceInMinutes(aEnd, aStart);
         const bDuration = differenceInMinutes(bEnd, bStart);
         return bDuration - aDuration;
       });
 
-      // Calculate positions for each event
+      // 3) 位置計算（列割り当て）
       const positionedEvents: PositionedEvent[] = [];
       const dayStart = startOfDay(day);
-
-      // Track columns for overlapping events
       const columns: { event: CalendarEvent; end: Date }[][] = [];
 
       sortedEvents.forEach((event) => {
         const eventStart = new Date(event.start);
         const eventEnd = new Date(event.end);
 
-        // Adjust start and end times if they're outside this day
+        // 当日外の端は当日端に切り詰める（表示計算用）
         const adjustedStart = isSameDay(day, eventStart)
           ? eventStart
           : dayStart;
@@ -145,16 +175,14 @@ export function WeekView({
           ? eventEnd
           : addHours(dayStart, 24);
 
-        // Calculate top position and height
+        // px計算（StartHour を 0 とした相対位置を WeekCellsHeight でスケール）
         const startHour =
           getHours(adjustedStart) + getMinutes(adjustedStart) / 60;
         const endHour = getHours(adjustedEnd) + getMinutes(adjustedEnd) / 60;
-
-        // Adjust the top calculation to account for the new start time
         const top = (startHour - StartHour) * WeekCellsHeight;
         const height = (endHour - startHour) * WeekCellsHeight;
 
-        // Find a column for this event
+        // 列決定（重なる限り次の列へ）
         let columnIndex = 0;
         let placed = false;
 
@@ -167,11 +195,8 @@ export function WeekView({
             const overlaps = col.some((c) =>
               areIntervalsOverlapping(
                 { start: adjustedStart, end: adjustedEnd },
-                {
-                  start: new Date(c.event.start),
-                  end: new Date(c.event.end),
-                },
-              ),
+                { start: new Date(c.event.start), end: new Date(c.event.end) }
+              )
             );
             if (!overlaps) {
               placed = true;
@@ -181,12 +206,12 @@ export function WeekView({
           }
         }
 
-        // Ensure column is initialized before pushing
+        // 列へ push
         const currentColumn = columns[columnIndex] || [];
         columns[columnIndex] = currentColumn;
         currentColumn.push({ event, end: adjustedEnd });
 
-        // Calculate width and left position based on number of columns
+        // 幅と left（列数が増えるほどやや狭く・右へ）
         const width = columnIndex === 0 ? 1 : 0.9;
         const left = columnIndex === 0 ? 0 : columnIndex * 0.1;
 
@@ -196,7 +221,7 @@ export function WeekView({
           height,
           left,
           width,
-          zIndex: 10 + columnIndex, // Higher columns get higher z-index
+          zIndex: 10 + columnIndex,
         });
       });
 
@@ -206,19 +231,24 @@ export function WeekView({
     return result;
   }, [days, events]);
 
+  /** イベントクリック時の通知（セルクリックにバブらないよう stopPropagation） */
   const handleEventClick = (event: CalendarEvent, e: React.MouseEvent) => {
     e.stopPropagation();
     onEventSelect(event);
   };
 
+  /** 終日セクションの表示有無 */
   const showAllDaySection = allDayEvents.length > 0;
+
+  /** 現在時刻インジケーター（週ビュー版） */
   const { currentTimePosition, currentTimeVisible } = useCurrentTimeIndicator(
     currentDate,
-    "week",
+    "week"
   );
 
   return (
     <div data-slot="week-view" className="flex h-full flex-col">
+      {/* 曜日ヘッダー */}
       <div className="bg-background/80 border-border/70 sticky top-0 z-30 grid grid-cols-8 border-y backdrop-blur-md uppercase">
         <div className="text-muted-foreground/70 py-2 text-center text-xs">
           <span className="max-[479px]:sr-only">{format(new Date(), "O")}</span>
@@ -237,6 +267,7 @@ export function WeekView({
         ))}
       </div>
 
+      {/* 終日/マルチデイ列 */}
       {showAllDaySection && (
         <div className="border-border/70 bg-muted/50 border-b">
           <div className="grid grid-cols-8">
@@ -268,7 +299,7 @@ export function WeekView({
                     const isFirstDay = isSameDay(day, eventStart);
                     const isLastDay = isSameDay(day, eventEnd);
 
-                    // Check if this is the first day in the current week view
+                    // 週の最初の可視日に達していればタイトルを表示
                     const isFirstVisibleDay =
                       dayIndex === 0 && isBefore(eventStart, weekStart);
                     const shouldShowTitle = isFirstDay || isFirstVisibleDay;
@@ -282,11 +313,11 @@ export function WeekView({
                         isFirstDay={isFirstDay}
                         isLastDay={isLastDay}
                       >
-                        {/* Show title if it's the first day of the event or the first visible day in the week */}
+                        {/* 初日 or 週の最初の可視日のときだけタイトル */}
                         <div
                           className={cn(
                             "truncate",
-                            !shouldShowTitle && "invisible",
+                            !shouldShowTitle && "invisible"
                           )}
                           aria-hidden={!shouldShowTitle}
                         >
@@ -302,7 +333,9 @@ export function WeekView({
         </div>
       )}
 
+      {/* 時間グリッド + 位置指定済みイベント */}
       <div className="grid flex-1 grid-cols-8 overflow-hidden">
+        {/* 時間レール */}
         <div className="border-border/70 border-r grid auto-cols-fr">
           {hours.map((hour, index) => (
             <div
@@ -318,13 +351,14 @@ export function WeekView({
           ))}
         </div>
 
+        {/* 各日の列 */}
         {days.map((day, dayIndex) => (
           <div
             key={day.toString()}
             className="border-border/70 relative border-r last:border-r-0 grid auto-cols-fr"
             data-today={isToday(day) || undefined}
           >
-            {/* Positioned events */}
+            {/* 配置済みイベント（ドラッグ可） */}
             {(processedDayEvents[dayIndex] ?? []).map((positionedEvent) => (
               <div
                 key={positionedEvent.event.id}
@@ -350,7 +384,7 @@ export function WeekView({
               </div>
             ))}
 
-            {/* Current time indicator - only show for today's column */}
+            {/* 現在時刻インジケーター（当日列のみ） */}
             {currentTimeVisible && isToday(day) && (
               <div
                 className="pointer-events-none absolute right-0 left-0 z-20"
@@ -362,6 +396,8 @@ export function WeekView({
                 </div>
               </div>
             )}
+
+            {/* 15分刻みの Droppable セル */}
             {hours.map((hour) => {
               const hourValue = getHours(hour);
               return (
@@ -369,7 +405,6 @@ export function WeekView({
                   key={hour.toString()}
                   className="border-border/70 relative min-h-[var(--week-cells-height)] border-b last:border-b-0"
                 >
-                  {/* Quarter-hour intervals */}
                   {[0, 1, 2, 3].map((quarter) => {
                     const quarterHourTime = hourValue + quarter * 0.25;
                     return (
@@ -386,7 +421,7 @@ export function WeekView({
                           quarter === 2 &&
                             "top-[calc(var(--week-cells-height)/4*2)]",
                           quarter === 3 &&
-                            "top-[calc(var(--week-cells-height)/4*3)]",
+                            "top-[calc(var(--week-cells-height)/4*3)]"
                         )}
                         onClick={() => {
                           const startTime = new Date(day);

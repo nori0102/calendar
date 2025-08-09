@@ -26,27 +26,62 @@ import { StartHour, EndHour } from "@/components/event-calendar/constants";
 import { cn } from "@/lib/utils";
 
 interface DayViewProps {
+  /** 表示対象の日（この1日分のイベントを描画） */
   currentDate: Date;
+  /** すべてのイベント（本コンポーネント側で日別フィルタリング） */
   events: CalendarEvent[];
+  /** イベントクリック時に親へ通知（詳細表示など） */
   onEventSelect: (event: CalendarEvent) => void;
+  /** 空き枠クリックで新規作成：開始時刻を親へ通知 */
   onEventCreate: (startTime: Date) => void;
 }
 
 interface PositionedEvent {
+  /** 描画対象のイベント */
   event: CalendarEvent;
+  /** タイムグリッド内の上端位置（px） */
   top: number;
+  /** 高さ（px）= 期間に比例 */
   height: number;
+  /** 左位置（%）= 重なり時に段組み */
   left: number;
+  /** 幅（%）= 重なり段に応じて調整 */
   width: number;
+  /** 前後関係を制御する z-index */
   zIndex: number;
 }
 
+/**
+ * 日ビューのタイムグリッドを描画するコンポーネント。
+ *
+ * - `currentDate` の1日分について、終日/マルチデイと時間帯イベントを分けて表示します。
+ * - 時間帯イベントは重なりを検出し、段（カラム）に割り当てて `left`/`width` を計算します。
+ * - 空き枠クリックで `onEventCreate(startTime)` を呼び出します（15分刻み）。
+ * - 現在時刻インジケーターをパーセンテージで配置します（`useCurrentTimeIndicator`）。
+ *
+ * @remarks
+ * - 表示時間帯は `StartHour`〜`EndHour` を使用（例：7〜24時）。見た目のセル高は CSS 変数 `--week-cells-height` を参照（型では `WeekCellsHeight`）。
+ * - 15分刻みのセルに対して `DroppableCell` を設置。DnD のドロップ先として `date` と `time`（例: `9.5`=9:30）を提供します。
+ * - 終日・マルチデイはヘッダ行（all-day セクション）にまとめ、スパンの左右端を `isFirstDay`/`isLastDay` で表現します。
+ * - ラベルの書式は `format(hour, "h a")`。ローカライズが必要なら `locale` を渡して調整してください。
+ *
+ * @example
+ * ```tsx
+ * <DayView
+ *   currentDate={new Date()}
+ *   events={events}
+ *   onEventSelect={(e) => setSelected(e)}
+ *   onEventCreate={(start) => openCreateDialog({ start })}
+ * />
+ * ```
+ */
 export function DayView({
   currentDate,
   events,
   onEventSelect,
   onEventCreate,
 }: DayViewProps) {
+  // 表示する時間帯（StartHour〜EndHour-1 を1時間刻みで配列化）
   const hours = useMemo(() => {
     const dayStart = startOfDay(currentDate);
     return eachHourOfInterval({
@@ -55,6 +90,7 @@ export function DayView({
     });
   }, [currentDate]);
 
+  // 当日と重なるイベントのみ抽出（開始/終了が当日、または当日でサンドイッチ）
   const dayEvents = useMemo(() => {
     return events
       .filter((event) => {
@@ -67,56 +103,50 @@ export function DayView({
         );
       })
       .sort(
-        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime(),
+        (a, b) => new Date(a.start).getTime() - new Date(b.start).getTime()
       );
   }, [currentDate, events]);
 
-  // Filter all-day events
+  // 終日・マルチデイ（上部の All day セクション）
   const allDayEvents = useMemo(() => {
-    return dayEvents.filter((event) => {
-      // Include explicitly marked all-day events or multi-day events
-      return event.allDay || isMultiDayEvent(event);
-    });
+    return dayEvents.filter((event) => event.allDay || isMultiDayEvent(event));
   }, [dayEvents]);
 
-  // Get only single-day time-based events
+  // 時間帯イベント（タイムグリッド内）
   const timeEvents = useMemo(() => {
-    return dayEvents.filter((event) => {
-      // Exclude all-day events and multi-day events
-      return !event.allDay && !isMultiDayEvent(event);
-    });
+    return dayEvents.filter(
+      (event) => !event.allDay && !isMultiDayEvent(event)
+    );
   }, [dayEvents]);
 
-  // Process events to calculate positions
+  // 重なりを考慮した位置計算（段組み/幅/高さ）
   const positionedEvents = useMemo(() => {
     const result: PositionedEvent[] = [];
     const dayStart = startOfDay(currentDate);
 
-    // Sort events by start time and duration
+    // 先に開始時刻→同時刻なら長いもの優先
     const sortedEvents = [...timeEvents].sort((a, b) => {
       const aStart = new Date(a.start);
       const bStart = new Date(b.start);
       const aEnd = new Date(a.end);
       const bEnd = new Date(b.end);
-
-      // First sort by start time
       if (aStart < bStart) return -1;
       if (aStart > bStart) return 1;
-
-      // If start times are equal, sort by duration (longer events first)
-      const aDuration = differenceInMinutes(aEnd, aStart);
-      const bDuration = differenceInMinutes(bEnd, bStart);
-      return bDuration - aDuration;
+      return (
+        (differenceInMinutes(aEnd, aStart) -
+          differenceInMinutes(bEnd, bStart)) *
+        -1
+      );
     });
 
-    // Track columns for overlapping events
+    // 重なり判定用の段配列
     const columns: { event: CalendarEvent; end: Date }[][] = [];
 
     sortedEvents.forEach((event) => {
       const eventStart = new Date(event.start);
       const eventEnd = new Date(event.end);
 
-      // Adjust start and end times if they're outside this day
+      // 当日外にまたぐ場合は当日範囲にクランプ
       const adjustedStart = isSameDay(currentDate, eventStart)
         ? eventStart
         : dayStart;
@@ -124,14 +154,14 @@ export function DayView({
         ? eventEnd
         : addHours(dayStart, 24);
 
-      // Calculate top position and height
+      // 表示位置（px）
       const startHour =
         getHours(adjustedStart) + getMinutes(adjustedStart) / 60;
       const endHour = getHours(adjustedEnd) + getMinutes(adjustedEnd) / 60;
       const top = (startHour - StartHour) * WeekCellsHeight;
       const height = (endHour - startHour) * WeekCellsHeight;
 
-      // Find a column for this event
+      // 段（重なりのない列）に割り当て
       let columnIndex = 0;
       let placed = false;
 
@@ -144,8 +174,8 @@ export function DayView({
           const overlaps = col.some((c) =>
             areIntervalsOverlapping(
               { start: adjustedStart, end: adjustedEnd },
-              { start: new Date(c.event.start), end: new Date(c.event.end) },
-            ),
+              { start: new Date(c.event.start), end: new Date(c.event.end) }
+            )
           );
           if (!overlaps) {
             placed = true;
@@ -155,12 +185,11 @@ export function DayView({
         }
       }
 
-      // Ensure column is initialized before pushing
       const currentColumn = columns[columnIndex] || [];
       columns[columnIndex] = currentColumn;
       currentColumn.push({ event, end: adjustedEnd });
 
-      // First column takes full width, others are indented by 10% and take 90% width
+      // 1段目は全幅、以降は10%ずつインデントして90%幅
       const width = columnIndex === 0 ? 1 : 0.9;
       const left = columnIndex === 0 ? 0 : columnIndex * 0.1;
 
@@ -170,7 +199,7 @@ export function DayView({
         height,
         left,
         width,
-        zIndex: 10 + columnIndex, // Higher columns get higher z-index
+        zIndex: 10 + columnIndex,
       });
     });
 
@@ -185,11 +214,12 @@ export function DayView({
   const showAllDaySection = allDayEvents.length > 0;
   const { currentTimePosition, currentTimeVisible } = useCurrentTimeIndicator(
     currentDate,
-    "day",
+    "day"
   );
 
   return (
     <div data-slot="day-view" className="contents">
+      {/* 終日/マルチデイ */}
       {showAllDaySection && (
         <div className="border-border/70 bg-muted/50 border-t">
           <div className="grid grid-cols-[3rem_1fr] sm:grid-cols-[4rem_1fr]">
@@ -214,7 +244,7 @@ export function DayView({
                     isFirstDay={isFirstDay}
                     isLastDay={isLastDay}
                   >
-                    {/* Always show the title in day view for better usability */}
+                    {/* DayView ではタイトルを常に表示 */}
                     <div>{event.title}</div>
                   </EventItem>
                 );
@@ -224,7 +254,9 @@ export function DayView({
         </div>
       )}
 
+      {/* タイムグリッド */}
       <div className="border-border/70 grid flex-1 grid-cols-[3rem_1fr] border-t sm:grid-cols-[4rem_1fr] overflow-hidden">
+        {/* 時刻ラベル列 */}
         <div>
           {hours.map((hour, index) => (
             <div
@@ -240,8 +272,9 @@ export function DayView({
           ))}
         </div>
 
+        {/* イベントとドロップ領域 */}
         <div className="relative">
-          {/* Positioned events */}
+          {/* 配置済みイベント */}
           {positionedEvents.map((positionedEvent) => (
             <div
               key={positionedEvent.event.id}
@@ -266,20 +299,20 @@ export function DayView({
             </div>
           ))}
 
-          {/* Current time indicator */}
+          {/* 現在時刻インジケーター */}
           {currentTimeVisible && (
             <div
               className="pointer-events-none absolute right-0 left-0 z-20"
               style={{ top: `${currentTimePosition}%` }}
             >
               <div className="relative flex items-center">
-                <div className="bg-red-500 absolute -left-1 h-2 w-2 rounded-full"></div>
-                <div className="bg-red-500 h-[2px] w-full"></div>
+                <div className="bg-red-500 absolute -left-1 h-2 w-2 rounded-full" />
+                <div className="bg-red-500 h-[2px] w-full" />
               </div>
             </div>
           )}
 
-          {/* Time grid */}
+          {/* 15分刻みのドロップ/クリックセル */}
           {hours.map((hour) => {
             const hourValue = getHours(hour);
             return (
@@ -287,7 +320,6 @@ export function DayView({
                 key={hour.toString()}
                 className="border-border/70 relative h-[var(--week-cells-height)] border-b last:border-b-0"
               >
-                {/* Quarter-hour intervals */}
                 {[0, 1, 2, 3].map((quarter) => {
                   const quarterHourTime = hourValue + quarter * 0.25;
                   return (
@@ -304,7 +336,7 @@ export function DayView({
                         quarter === 2 &&
                           "top-[calc(var(--week-cells-height)/4*2)]",
                         quarter === 3 &&
-                          "top-[calc(var(--week-cells-height)/4*3)]",
+                          "top-[calc(var(--week-cells-height)/4*3)]"
                       )}
                       onClick={() => {
                         const startTime = new Date(currentDate);

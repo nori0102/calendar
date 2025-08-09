@@ -12,30 +12,46 @@ import {
 } from "@/components/event-calendar";
 import { cn } from "@/lib/utils";
 
-// Using date-fns format with custom formatting:
-// 'h' - hours (1-12)
-// 'a' - am/pm
-// ':mm' - minutes with leading zero (only if the token 'mm' is present)
+/**
+ * 分が 0 の場合は「h a」、そうでない場合は「h:mm a」で時刻をフォーマットする関数。
+ * 例: 9am, 9:15am
+ */
 const formatTimeWithOptionalMinutes = (date: Date) => {
   return format(date, getMinutes(date) === 0 ? "ha" : "h:mma").toLowerCase();
 };
 
 interface EventWrapperProps {
+  /** イベントデータ */
   event: CalendarEvent;
+  /** マルチデイイベントの最初の日かどうか */
   isFirstDay?: boolean;
+  /** マルチデイイベントの最後の日かどうか */
   isLastDay?: boolean;
+  /** ドラッグ中かどうか */
   isDragging?: boolean;
+  /** クリック時のハンドラ */
   onClick?: (e: React.MouseEvent) => void;
+  /** 追加クラス */
   className?: string;
+  /** 子要素（イベントの表示内容） */
   children: React.ReactNode;
+  /** ドラッグ中の仮想的な現在時刻 */
   currentTime?: Date;
+  /** DnD のイベントリスナー */
   dndListeners?: SyntheticListenerMap;
+  /** DnD の属性 */
   dndAttributes?: DraggableAttributes;
+  /** マウス押下時のハンドラ */
   onMouseDown?: (e: React.MouseEvent) => void;
+  /** タッチ開始時のハンドラ */
   onTouchStart?: (e: React.TouchEvent) => void;
 }
 
-// Shared wrapper component for event styling
+/**
+ * EventWrapper
+ * イベント表示の外枠部分を担当する共通コンポーネント。
+ * 色、角丸、ドラッグ時の見た目、過去イベント表示などを制御する。
+ */
 function EventWrapper({
   event,
   isFirstDay = true,
@@ -50,11 +66,11 @@ function EventWrapper({
   onMouseDown,
   onTouchStart,
 }: EventWrapperProps) {
-  // Always use the currentTime (if provided) to determine if the event is in the past
+  // ドラッグ中の場合は currentTime からイベントの終了時間を算出
   const displayEnd = currentTime
     ? new Date(
         new Date(currentTime).getTime() +
-          (new Date(event.end).getTime() - new Date(event.start).getTime()),
+          (new Date(event.end).getTime() - new Date(event.start).getTime())
       )
     : new Date(event.end);
 
@@ -66,7 +82,7 @@ function EventWrapper({
         "focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full overflow-hidden px-1 text-left font-medium backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] data-dragging:cursor-grabbing data-dragging:shadow-lg data-past-event:line-through sm:px-2",
         getEventColorClasses(event.color),
         getBorderRadiusClasses(isFirstDay, isLastDay),
-        className,
+        className
       )}
       data-dragging={isDragging || undefined}
       data-past-event={isEventInPast || undefined}
@@ -82,22 +98,43 @@ function EventWrapper({
 }
 
 interface EventItemProps {
+  /** イベントデータ */
   event: CalendarEvent;
+  /** 表示ビュー（month, week, day, agenda） */
   view: "month" | "week" | "day" | "agenda";
+  /** ドラッグ中かどうか */
   isDragging?: boolean;
+  /** クリック時のハンドラ */
   onClick?: (e: React.MouseEvent) => void;
+  /** 時刻を表示するかどうか */
   showTime?: boolean;
-  currentTime?: Date; // For updating time during drag
+  /** ドラッグ中の仮想的な現在時刻 */
+  currentTime?: Date;
+  /** マルチデイイベントの最初の日かどうか */
   isFirstDay?: boolean;
+  /** マルチデイイベントの最後の日かどうか */
   isLastDay?: boolean;
+  /** 子要素（任意の表示内容） */
   children?: React.ReactNode;
+  /** 追加クラス */
   className?: string;
+  /** DnD のイベントリスナー */
   dndListeners?: SyntheticListenerMap;
+  /** DnD の属性 */
   dndAttributes?: DraggableAttributes;
+  /** マウス押下時のハンドラ */
   onMouseDown?: (e: React.MouseEvent) => void;
+  /** タッチ開始時のハンドラ */
   onTouchStart?: (e: React.TouchEvent) => void;
 }
 
+/**
+ * EventItem
+ * カレンダーの各ビューに応じてイベントの見た目を切り替えて表示するコンポーネント。
+ * - month: 1行に簡易表示
+ * - week/day: 時間や長さによって1行/2行表示を切替
+ * - agenda: 詳細表示（時間・場所・説明など）
+ */
 export function EventItem({
   event,
   view,
@@ -116,37 +153,38 @@ export function EventItem({
 }: EventItemProps) {
   const eventColor = event.color;
 
-  // Use the provided currentTime (for dragging) or the event's actual time
+  // 表示用開始時間
   const displayStart = useMemo(() => {
     return currentTime || new Date(event.start);
   }, [currentTime, event.start]);
 
+  // 表示用終了時間
   const displayEnd = useMemo(() => {
     return currentTime
       ? new Date(
           new Date(currentTime).getTime() +
-            (new Date(event.end).getTime() - new Date(event.start).getTime()),
+            (new Date(event.end).getTime() - new Date(event.start).getTime())
         )
       : new Date(event.end);
   }, [currentTime, event.start, event.end]);
 
-  // Calculate event duration in minutes
+  // イベントの長さ（分単位）
   const durationMinutes = useMemo(() => {
     return differenceInMinutes(displayEnd, displayStart);
   }, [displayStart, displayEnd]);
 
+  // 時刻表示の組み立て
   const getEventTime = () => {
     if (event.allDay) return "All day";
-
-    // For short events (less than 45 minutes), only show start time
     if (durationMinutes < 45) {
       return formatTimeWithOptionalMinutes(displayStart);
     }
-
-    // For longer events, show both start and end time
-    return `${formatTimeWithOptionalMinutes(displayStart)} - ${formatTimeWithOptionalMinutes(displayEnd)}`;
+    return `${formatTimeWithOptionalMinutes(
+      displayStart
+    )} - ${formatTimeWithOptionalMinutes(displayEnd)}`;
   };
 
+  // Monthビュー
   if (view === "month") {
     return (
       <EventWrapper
@@ -157,7 +195,7 @@ export function EventItem({
         onClick={onClick}
         className={cn(
           "mt-[var(--event-gap)] h-[var(--event-height)] items-center text-[10px] sm:text-[13px]",
-          className,
+          className
         )}
         currentTime={currentTime}
         dndListeners={dndListeners}
@@ -179,6 +217,7 @@ export function EventItem({
     );
   }
 
+  // Week / Dayビュー
   if (view === "week" || view === "day") {
     return (
       <EventWrapper
@@ -191,7 +230,7 @@ export function EventItem({
           "py-1",
           durationMinutes < 45 ? "items-center" : "flex-col",
           view === "week" ? "text-[10px] sm:text-[13px]" : "text-[13px]",
-          className,
+          className
         )}
         currentTime={currentTime}
         dndListeners={dndListeners}
@@ -222,13 +261,13 @@ export function EventItem({
     );
   }
 
-  // Agenda view - kept separate since it's significantly different
+  // Agendaビュー
   return (
     <button
       className={cn(
         "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-1 rounded p-2 text-left transition outline-none focus-visible:ring-[3px] data-past-event:line-through data-past-event:opacity-90",
         getEventColorClasses(eventColor),
-        className,
+        className
       )}
       data-past-event={isPast(new Date(event.end)) || undefined}
       onClick={onClick}

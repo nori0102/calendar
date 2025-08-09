@@ -4,46 +4,53 @@ import React, { createContext, useContext, useState, ReactNode } from "react";
 import { etiquettes } from "@/components/big-calendar";
 
 interface CalendarContextType {
-  // Date management
+  /**  表示中の日付 */
   currentDate: Date;
+  /** 表示中の日付を設定する */
   setCurrentDate: (date: Date) => void;
 
-  // Etiquette visibility management
+  /** 表示する色ラベルの管理 */
   visibleColors: string[];
+  /** 色ラベルの表示・非表示を切り替える */
   toggleColorVisibility: (color: string) => void;
+  /** 色ラベルが表示されているかどうか */
   isColorVisible: (color: string | undefined) => boolean;
 }
 
 const CalendarContext = createContext<CalendarContextType | undefined>(
-  undefined,
+  undefined
 );
 
 export function useCalendarContext() {
   const context = useContext(CalendarContext);
   if (context === undefined) {
     throw new Error(
-      "useCalendarContext must be used within a CalendarProvider",
+      "useCalendarContext must be used within a CalendarProvider"
     );
   }
   return context;
 }
 
-interface CalendarProviderProps {
-  children: ReactNode;
-}
-
-export function CalendarProvider({ children }: CalendarProviderProps) {
+/**
+ * 日付や色ラベル（タグ）の可視状態などの共有状態を管理する
+ */
+export function CalendarProvider({ children }: { children: ReactNode }) {
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
-  // Initialize visibleColors based on the isActive property in etiquettes
+  // 初期状態では、etiquetteのisActiveがtrueのもののcolorをvisibleColorsに設定
+  // これにより、初期表示ではアクティブな色ラベルのみが表示される
   const [visibleColors, setVisibleColors] = useState<string[]>(() => {
-    // Filter etiquettes to get only those that are active
+    /** isActiveがtrueのetiquetteのcolorを取得 */
     return etiquettes
       .filter((etiquette) => etiquette.isActive)
       .map((etiquette) => etiquette.color);
   });
 
-  // Toggle visibility of a color
+  /**
+   * 指定した色ラベルの表示/非表示をトグル（切り替え）する関数
+   *
+   * @param {string} color - 表示/非表示を切り替える色ラベル
+   */
   const toggleColorVisibility = (color: string) => {
     setVisibleColors((prev) => {
       if (prev.includes(color)) {
@@ -54,9 +61,14 @@ export function CalendarProvider({ children }: CalendarProviderProps) {
     });
   };
 
-  // Check if a color is visible
+  /**
+   * 指定された色が現在表示状態かどうかを判定する関数
+   *
+   * @param {string | undefined} color - 色ラベル（undefinedの場合は常に表示）
+   * @returns {boolean} - 色ラベルが表示されている場合はtrue、表示されていない場合はfalse
+   */
   const isColorVisible = (color: string | undefined) => {
-    if (!color) return true; // Events without a color are always visible
+    if (!color) return true; // 色が指定されていないイベントは常に表示
     return visibleColors.includes(color);
   };
 

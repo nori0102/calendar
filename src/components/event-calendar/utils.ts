@@ -1,9 +1,18 @@
+"use client";
+
 import { isSameDay } from "date-fns";
 
 import type { CalendarEvent, EventColor } from "@/components/event-calendar";
 
 /**
- * Get CSS classes for event colors
+ * # 色クラス取得
+ * イベントの色（`EventColor`）に応じて Tailwind ユーティリティを返す。
+ *
+ * @param color - イベントの色。未指定時は `"sky"`。
+ * @returns 色とダークモードに対応したクラス文字列
+ * @remarks
+ * - 返却値は背景・ホバー・文字色・影まで含む一括スタイル。
+ * - 未知の色が来た場合も `"sky"` にフォールバック。
  */
 export function getEventColorClasses(color?: EventColor | string): string {
   const eventColor = color || "sky";
@@ -25,25 +34,38 @@ export function getEventColorClasses(color?: EventColor | string): string {
 }
 
 /**
- * Get CSS classes for border radius based on event position in multi-day events
+ * # 角丸クラス取得（マルチデイ表示用）
+ * スパンの先頭/末尾/中日かで角丸と幅の補正クラスを返す。
+ *
+ * @param isFirstDay - スパンの最初の日か
+ * @param isLastDay - スパンの最後の日か
+ * @returns 角丸と微調整のためのクラス
+ * @remarks
+ * - `not-in-data-[slot=popover-content]:...` は月ビュー内の幅合わせ用の補正。
  */
 export function getBorderRadiusClasses(
   isFirstDay: boolean,
-  isLastDay: boolean,
+  isLastDay: boolean
 ): string {
   if (isFirstDay && isLastDay) {
-    return "rounded"; // Both ends rounded
+    return "rounded";
   } else if (isFirstDay) {
-    return "rounded-l rounded-r-none not-in-data-[slot=popover-content]:w-[calc(100%+5px)]"; // Only left end rounded
+    return "rounded-l rounded-r-none not-in-data-[slot=popover-content]:w-[calc(100%+5px)]";
   } else if (isLastDay) {
-    return "rounded-r rounded-l-none not-in-data-[slot=popover-content]:w-[calc(100%+4px)] not-in-data-[slot=popover-content]:-translate-x-[4px]"; // Only right end rounded
+    return "rounded-r rounded-l-none not-in-data-[slot=popover-content]:w-[calc(100%+4px)] not-in-data-[slot=popover-content]:-translate-x-[4px]";
   } else {
-    return "rounded-none not-in-data-[slot=popover-content]:w-[calc(100%+9px)] not-in-data-[slot=popover-content]:-translate-x-[4px]"; // No rounded corners
+    return "rounded-none not-in-data-[slot=popover-content]:w-[calc(100%+9px)] not-in-data-[slot=popover-content]:-translate-x-[4px]";
   }
 }
 
 /**
- * Check if an event is a multi-day event
+ * # マルチデイ判定
+ * イベントが終日または日付をまたぐかどうかを判定。
+ *
+ * @param event - 対象イベント
+ * @returns マルチデイなら `true`
+ * @remarks
+ * - シンプルに「日付（day）が異なるか」を見る。タイムゾーンの境界を厳密に扱う必要があれば拡張を検討。
  */
 export function isMultiDayEvent(event: CalendarEvent): boolean {
   const eventStart = new Date(event.start);
@@ -52,11 +74,16 @@ export function isMultiDayEvent(event: CalendarEvent): boolean {
 }
 
 /**
- * Filter events for a specific day
+ * # 指定日の開始イベント一覧
+ * その日 **に開始する** イベントのみを抽出して開始時刻順に並べる。
+ *
+ * @param events - 全イベント
+ * @param day - 対象日
+ * @returns 指定日に開始するイベント（昇順）
  */
 export function getEventsForDay(
   events: CalendarEvent[],
-  day: Date,
+  day: Date
 ): CalendarEvent[] {
   return events
     .filter((event) => {
@@ -67,7 +94,11 @@ export function getEventsForDay(
 }
 
 /**
- * Sort events with multi-day events first, then by start time
+ * # イベントの表示順ソート
+ * マルチデイ（終日含む）を先に、その後に開始時刻昇順で並べ替え。
+ *
+ * @param events - 並べ替え対象
+ * @returns 望ましい表示順にソートされた配列
  */
 export function sortEvents(events: CalendarEvent[]): CalendarEvent[] {
   return [...events].sort((a, b) => {
@@ -82,11 +113,18 @@ export function sortEvents(events: CalendarEvent[]): CalendarEvent[] {
 }
 
 /**
- * Get multi-day events that span across a specific day (but don't start on that day)
+ * # 指定日をまたぐ（が、当日開始ではない）イベント
+ * いわゆるスパン中日・最終日の表示用に、**その日が中間または終了**となるマルチデイイベントを抽出。
+ *
+ * @param events - 全イベント
+ * @param day - 対象日
+ * @returns 当日がスパン途中/終了のイベント
+ * @remarks
+ * - 当日開始のものは含めない（開始日は `getEventsForDay` 側で扱う前提）。
  */
 export function getSpanningEventsForDay(
   events: CalendarEvent[],
-  day: Date,
+  day: Date
 ): CalendarEvent[] {
   return events.filter((event) => {
     if (!isMultiDayEvent(event)) return false;
@@ -94,7 +132,6 @@ export function getSpanningEventsForDay(
     const eventStart = new Date(event.start);
     const eventEnd = new Date(event.end);
 
-    // Only include if it's not the start day but is either the end day or a middle day
     return (
       !isSameDay(day, eventStart) &&
       (isSameDay(day, eventEnd) || (day > eventStart && day < eventEnd))
@@ -103,11 +140,16 @@ export function getSpanningEventsForDay(
 }
 
 /**
- * Get all events visible on a specific day (starting, ending, or spanning)
+ * # 指定日に見えるすべてのイベント
+ * 当日開始・当日終了・当日がスパン中日のいずれかに該当するイベントを抽出。
+ *
+ * @param events - 全イベント
+ * @param day - 対象日
+ * @returns 当日に可視なイベント
  */
 export function getAllEventsForDay(
   events: CalendarEvent[],
-  day: Date,
+  day: Date
 ): CalendarEvent[] {
   return events.filter((event) => {
     const eventStart = new Date(event.start);
@@ -121,11 +163,16 @@ export function getAllEventsForDay(
 }
 
 /**
- * Get all events for a day (for agenda view)
+ * # アジェンダ用：指定日の全イベント（開始時刻順）
+ * `getAllEventsForDay` と同じ抽出条件で、表示用に昇順ソートしたもの。
+ *
+ * @param events - 全イベント
+ * @param day - 対象日
+ * @returns 当日に可視なイベント（開始時刻昇順）
  */
 export function getAgendaEventsForDay(
   events: CalendarEvent[],
-  day: Date,
+  day: Date
 ): CalendarEvent[] {
   return events
     .filter((event) => {
@@ -141,7 +188,15 @@ export function getAgendaEventsForDay(
 }
 
 /**
- * Add hours to a date
+ * # 日時に時間を加算
+ *
+ * @param date - 基準日時
+ * @param hours - 加算する時間数（負値で減算も可）
+ * @returns 加算後の新しい `Date`
+ * @example
+ * ```ts
+ * addHoursToDate(new Date("2025-08-09T09:00:00"), 2) // -> 11:00
+ * ```
  */
 export function addHoursToDate(date: Date, hours: number): Date {
   const result = new Date(date);
