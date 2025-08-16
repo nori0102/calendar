@@ -26,7 +26,7 @@ import { addMinutes, differenceInMinutes } from "date-fns";
 import { EventItem, type CalendarEvent } from "@/components/event-calendar";
 
 /**
- * DnD 中に共有する状態の型。
+ * D&D 中に共有する状態の型。
  *
  * @remarks
  * - `activeEvent` はドラッグ対象のイベントオブジェクト
@@ -54,7 +54,7 @@ type CalendarDndContextType = {
 };
 
 /**
- * DnD 状態共有用の React コンテキスト。
+ * D&D 状態共有用の React コンテキスト。
  * {@link useCalendarDnd} で取得してください。
  */
 const CalendarDndContext = createContext<CalendarDndContextType>({
@@ -69,7 +69,7 @@ const CalendarDndContext = createContext<CalendarDndContextType>({
 });
 
 /**
- * カレンダー用 DnD 状態を参照するフック。
+ * カレンダー用 D&D 状態を参照するフック。
  *
  * @example
  * ```tsx
@@ -132,8 +132,8 @@ export function CalendarDndProvider({
   children,
   onEventUpdate,
 }: CalendarDndProviderProps) {
-  const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null);
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const [activeEvent, setActiveEvent] = useState<CalendarEvent | null>(null); // ドラッグ中のイベント
+  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null); // ドラッグ中の ID
   const [activeView, setActiveView] = useState<"month" | "week" | "day" | null>(
     null
   );

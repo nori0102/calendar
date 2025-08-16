@@ -62,7 +62,7 @@ export function NavUser({
 
           {/* ドロップダウンの中身 */}
           <DropdownMenuContent
-            className="w-(--radix-dropdown-menu-trigger-width) dark bg-sidebar"
+            className="w-(--radix-dropdown-menu-trigger-width) bg-sidebar text-sidebar-foreground"
             side="bottom"
             align="end"
             sideOffset={4}

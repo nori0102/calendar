@@ -64,11 +64,11 @@ export function useEventVisibility({
   eventHeight,
   eventGap,
 }: EventVisibilityOptions): EventVisibilityResult {
-  // 高さ計測対象
+  /** 高さ計測対象 */
   const contentRef = useRef<HTMLDivElement>(null);
-  // 使い回すための ResizeObserver 保持
+  /** 使い回すための ResizeObserver 保持 */
   const observerRef = useRef<ResizeObserver | null>(null);
-  // 現在のコンテンツ高さ
+  /** 現在のコンテンツ高さ */
   const [contentHeight, setContentHeight] = useState<number | null>(null);
 
   // 描画前に同期計測

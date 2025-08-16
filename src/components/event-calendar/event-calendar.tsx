@@ -1,5 +1,6 @@
 "use client";
 
+import { ja } from "date-fns/locale";
 import { useEffect, useMemo, useState } from "react";
 import { useCalendarContext } from "./calendar-context";
 import {
@@ -46,7 +47,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { SidebarTrigger, useSidebar } from "@/components/ui/sidebar";
 import ThemeToggle from "@/components/theme-toggle";
-import Participants from "@/components/participants";
+// import Participants from "@/components/participants";
 
 /**
  * カレンダー UI のルートコンポーネント。
@@ -106,11 +107,12 @@ export function EventCalendar({
   // 共有カレンダー状態（基準日）
   const { currentDate, setCurrentDate } = useCalendarContext();
 
-  // 現在のビュー
+  /** 現在のビュー */
   const [view, setView] = useState<CalendarView>(initialView);
 
-  // イベント編集ダイアログの状態
+  /** イベントダイアログの開閉状態と選択イベント */
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
+  /** 選択中のイベント（編集用） */
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
@@ -119,6 +121,7 @@ export function EventCalendar({
   // ビュー切替のキーボードショートカット（入力中/ダイアログ時は無効）
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // 入力中やダイアログが開いている場合は無視
       if (
         isEventDialogOpen ||
         e.target instanceof HTMLInputElement ||
@@ -127,6 +130,7 @@ export function EventCalendar({
       ) {
         return;
       }
+      // M/W/D/A キーでビュー切替
       switch (e.key.toLowerCase()) {
         case "m":
           setView("month");
@@ -142,6 +146,7 @@ export function EventCalendar({
           break;
       }
     };
+
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isEventDialogOpen]);
@@ -170,8 +175,8 @@ export function EventCalendar({
   // イベント選択（編集ダイアログを開く）
   const handleEventSelect = (event: CalendarEvent) => {
     console.log("Event selected:", event);
-    setSelectedEvent(event);
-    setIsEventDialogOpen(true);
+    setSelectedEvent(event); // 選択イベントを設定
+    setIsEventDialogOpen(true); // イベントダイアログを開く
   };
 
   // 空き枠クリックで新規作成（15分刻みにスナップ）
@@ -200,19 +205,20 @@ export function EventCalendar({
   // ダイアログ保存（新規 or 既存）
   const handleEventSave = (event: CalendarEvent) => {
     if (event.id) {
+      // 既存イベントの更新
       onEventUpdate?.(event);
-      toast(`Event "${event.title}" updated`, {
-        description: format(new Date(event.start), "MMM d, yyyy"),
-        position: "bottom-left",
+      toast(` ${event.title}： 更新`, {
+        description: format(new Date(event.start), "yyyy年MM月dd日"),
+        position: "bottom-right",
       });
     } else {
       onEventAdd?.({
         ...event,
         id: Math.random().toString(36).substring(2, 11),
       });
-      toast(`Event "${event.title}" added`, {
-        description: format(new Date(event.start), "MMM d, yyyy"),
-        position: "bottom-left",
+      toast(` ${event.title}： 追加`, {
+        description: format(new Date(event.start), "yyyy年MM月dd日"),
+        position: "bottom-right",
       });
     }
     setIsEventDialogOpen(false);
@@ -226,9 +232,9 @@ export function EventCalendar({
     setIsEventDialogOpen(false);
     setSelectedEvent(null);
     if (deletedEvent) {
-      toast(`Event "${deletedEvent.title}" deleted`, {
-        description: format(new Date(deletedEvent.start), "MMM d, yyyy"),
-        position: "bottom-left",
+      toast(`${deletedEvent.title}：削除`, {
+        description: format(new Date(deletedEvent.start), "yyyy年MM月dd日"),
+        position: "bottom-right",
       });
     }
   };
@@ -236,33 +242,35 @@ export function EventCalendar({
   // DnD による移動（CalendarDndProvider から呼ばれる）
   const handleEventUpdate = (updatedEvent: CalendarEvent) => {
     onEventUpdate?.(updatedEvent);
-    toast(`Event "${updatedEvent.title}" moved`, {
-      description: format(new Date(updatedEvent.start), "MMM d, yyyy"),
-      position: "bottom-left",
+    toast(` ${updatedEvent.title}：移動`, {
+      description: format(new Date(updatedEvent.start), "yyyy年MM月dd日"),
+      position: "bottom-right",
     });
   };
 
-  // ヘッダタイトル（ビューごとに表示）
+  // ヘッダータイトル（ビューごとに表示）
   const viewTitle = useMemo(() => {
     if (view === "month") {
-      return format(currentDate, "MMMM yyyy");
+      return format(currentDate, "yyyy年M月", { locale: ja });
     } else if (view === "week") {
-      const start = startOfWeek(currentDate, { weekStartsOn: 0 });
-      const end = endOfWeek(currentDate, { weekStartsOn: 0 });
-      return isSameMonth(start, end)
-        ? format(start, "MMMM yyyy")
-        : `${format(start, "MMM")} - ${format(end, "MMM yyyy")}`;
+      const start = startOfWeek(currentDate, { weekStartsOn: 0 }); // 週の始まり(日曜日)
+      const end = endOfWeek(currentDate, { weekStartsOn: 0 }); // 週の終わり(土曜日)
+      return isSameMonth(start, end) // 同じ月であればtrue
+        ? format(start, "yyyy年M月", { locale: ja })
+        : `${format(start, "yyyy年M月", { locale: ja })} 〜 ${format(
+            end,
+            "M月",
+            { locale: ja }
+          )}`;
     } else if (view === "day") {
+      //画面幅に応じて表示内容を切り替え
       return (
         <>
-          <span className="min-sm:hidden" aria-hidden="true">
-            {format(currentDate, "MMM d, yyyy")}
-          </span>
-          <span className="max-sm:hidden min-md:hidden" aria-hidden="true">
-            {format(currentDate, "MMMM d, yyyy")}
+          <span className="min-md:hidden">
+            {format(currentDate, "M月d日 (E)", { locale: ja })}
           </span>
           <span className="max-md:hidden">
-            {format(currentDate, "EEE MMMM d, yyyy")}
+            {format(currentDate, "yyyy年M月d日 (EEEE)", { locale: ja })}
           </span>
         </>
       );
@@ -270,10 +278,15 @@ export function EventCalendar({
       const start = currentDate;
       const end = addDays(currentDate, AgendaDaysToShow - 1);
       return isSameMonth(start, end)
-        ? format(start, "MMMM yyyy")
-        : `${format(start, "MMM")} - ${format(end, "MMM yyyy")}`;
+        ? format(start, "yyyy年M月", { locale: ja })
+        : `${format(start, "M月", { locale: ja })} 〜 ${format(
+            end,
+            "yyyy年M月",
+            { locale: ja }
+          )}`;
     } else {
-      return format(currentDate, "MMMM yyyy");
+      // デフォルト
+      return format(currentDate, "yyyy年M月", { locale: ja });
     }
   }, [currentDate, view]);
 
@@ -288,6 +301,7 @@ export function EventCalendar({
         } as React.CSSProperties
       }
     >
+      {/* DnD（ドラッグ＆ドロップ）の提供範囲を定義 */}
       <CalendarDndProvider onEventUpdate={handleEventUpdate}>
         {/* Header */}
         <div
@@ -307,7 +321,7 @@ export function EventCalendar({
                 {viewTitle}
               </h2>
             </div>
-            <Participants />
+            {/* <Participants /> */}
           </div>
 
           <div className="flex items-center justify-between gap-2">
@@ -381,7 +395,6 @@ export function EventCalendar({
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-
               <ThemeToggle />
             </div>
           </div>

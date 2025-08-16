@@ -57,11 +57,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isColorVisible, toggleColorVisibility } = useCalendarContext();
 
   return (
-    <Sidebar
-      variant="inset"
-      {...props}
-      className="dark scheme-only-dark max-lg:p-3 lg:pe-1"
-    >
+    <Sidebar variant="inset" {...props} className="max-lg:p-3 lg:pe-1">
       {/* ヘッダー：ブランドと開閉トリガー */}
       <SidebarHeader>
         <div className="flex justify-between items-center gap-2">
