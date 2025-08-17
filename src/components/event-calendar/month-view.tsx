@@ -13,6 +13,7 @@ import {
   startOfMonth,
   startOfWeek,
 } from "date-fns";
+import { ja } from "date-fns/locale";
 
 import {
   Popover,
@@ -77,12 +78,12 @@ export function MonthView({
   }, [currentDate]);
 
   /**
-   * 曜日ヘッダー（Sun〜Sat）
+   * 曜日ヘッダー（日〜土）
    */
   const weekdays = useMemo(() => {
     return Array.from({ length: 7 }).map((_, i) => {
       const date = addDays(startOfWeek(new Date()), i);
-      return format(date, "EEE");
+      return format(date, "EEEEE", { locale: ja }); // EEEEEで1文字の曜日（日月火水木金土）
     });
   }, []);
 
@@ -288,7 +289,7 @@ export function MonthView({
                           >
                             <div className="space-y-2">
                               <div className="text-sm font-medium">
-                                {format(day, "EEE d")}
+                                {format(day, "M月d日(EEEEE)", { locale: ja })}
                               </div>
                               <div className="space-y-1">
                                 {sortEvents(allEvents).map((event) => {

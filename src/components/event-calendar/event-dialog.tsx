@@ -63,7 +63,7 @@ interface EventDialogProps {
  * - 日付は `Calendar`（単一選択）、時間は **5分刻み** の `Select` を使用。
  * - 時間帯イベントは `StartHour`〜`EndHour` の範囲チェックを行い、終日（All day）の場合は 00:00〜23:59:59 として保存。
  * - `end` が `start` より前にならないようバリデーション（同時刻はOK）。
- * - タイトル未入力時は `"(no title)"` を補完。
+ * - タイトル未入力時は `"（タイトルなし）"` を補完。
  * - 既存イベントには削除ボタンを表示。
  *
  * @remarks
@@ -186,7 +186,7 @@ export function EventDialog({
         endHours > EndHour
       ) {
         setError(
-          `Selected time must be between ${StartHour}:00 and ${EndHour}:00`
+          `選択した時刻は${StartHour}:00から${EndHour}:00の間で入力してください`
         );
         return;
       }
@@ -201,12 +201,12 @@ export function EventDialog({
 
     // 日付整合性（end >= start）
     if (isBefore(end, start)) {
-      setError("End date cannot be before start date");
+      setError("終了日は開始日より前に設定できません");
       return;
     }
 
     // タイトル未入力時のフォールバック
-    const eventTitle = title.trim() ? title : "(no title)";
+    const eventTitle = title.trim() ? title : "（タイトルなし）";
 
     onSave({
       id: event?.id || "",
@@ -270,11 +270,11 @@ export function EventDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{event?.id ? "Edit Event" : "Create Event"}</DialogTitle>
+          <DialogTitle>{event?.id ? "イベント編集" : "イベント作成"}</DialogTitle>
           <DialogDescription className="sr-only">
             {event?.id
-              ? "Edit the details of this event"
-              : "Add a new event to your calendar"}
+              ? "このイベントの詳細を編集"
+              : "新しいイベントをカレンダーに追加"}
           </DialogDescription>
         </DialogHeader>
 
@@ -288,7 +288,7 @@ export function EventDialog({
         {/* 本文フォーム */}
         <div className="grid gap-4 py-4">
           <div className="*:not-first:mt-1.5">
-            <Label htmlFor="title">Title</Label>
+            <Label htmlFor="title">タイトル</Label>
             <Input
               id="title"
               value={title}
@@ -297,7 +297,7 @@ export function EventDialog({
           </div>
 
           <div className="*:not-first:mt-1.5">
-            <Label htmlFor="description">Description</Label>
+            <Label htmlFor="description">説明</Label>
             <Textarea
               id="description"
               value={description}
@@ -309,7 +309,7 @@ export function EventDialog({
           {/* Start */}
           <div className="flex gap-4">
             <div className="flex-1 *:not-first:mt-1.5">
-              <Label htmlFor="start-date">Start Date</Label>
+              <Label htmlFor="start-date">開始日</Label>
               <Popover open={startDateOpen} onOpenChange={setStartDateOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -326,7 +326,7 @@ export function EventDialog({
                         !startDate && "text-muted-foreground"
                       )}
                     >
-                      {startDate ? format(startDate, "PPP") : "Pick a date"}
+                      {startDate ? format(startDate, "PPP") : "日付を選択"}
                     </span>
                     <RiCalendarLine
                       size={16}
@@ -358,10 +358,10 @@ export function EventDialog({
 
             {!allDay && (
               <div className="min-w-28 *:not-first:mt-1.5">
-                <Label htmlFor="start-time">Start Time</Label>
+                <Label htmlFor="start-time">開始時刻</Label>
                 <Select value={startTime} onValueChange={setStartTime}>
                   <SelectTrigger id="start-time">
-                    <SelectValue placeholder="Select time" />
+                    <SelectValue placeholder="時刻を選択" />
                   </SelectTrigger>
                   <SelectContent>
                     {timeOptions.map((option) => (
@@ -378,7 +378,7 @@ export function EventDialog({
           {/* End */}
           <div className="flex gap-4">
             <div className="flex-1 *:not-first:mt-1.5">
-              <Label htmlFor="end-date">End Date</Label>
+              <Label htmlFor="end-date">終了日</Label>
               <Popover open={endDateOpen} onOpenChange={setEndDateOpen}>
                 <PopoverTrigger asChild>
                   <Button
@@ -395,7 +395,7 @@ export function EventDialog({
                         !endDate && "text-muted-foreground"
                       )}
                     >
-                      {endDate ? format(endDate, "PPP") : "Pick a date"}
+                      {endDate ? format(endDate, "PPP") : "日付を選択"}
                     </span>
                     <RiCalendarLine
                       size={16}
@@ -424,10 +424,10 @@ export function EventDialog({
 
             {!allDay && (
               <div className="min-w-28 *:not-first:mt-1.5">
-                <Label htmlFor="end-time">End Time</Label>
+                <Label htmlFor="end-time">終了時刻</Label>
                 <Select value={endTime} onValueChange={setEndTime}>
                   <SelectTrigger id="end-time">
-                    <SelectValue placeholder="Select time" />
+                    <SelectValue placeholder="時刻を選択" />
                   </SelectTrigger>
                   <SelectContent>
                     {timeOptions.map((option) => (
@@ -448,12 +448,12 @@ export function EventDialog({
               checked={allDay}
               onCheckedChange={(checked) => setAllDay(checked === true)}
             />
-            <Label htmlFor="all-day">All day</Label>
+            <Label htmlFor="all-day">終日</Label>
           </div>
 
           {/* Location */}
           <div className="*:not-first:mt-1.5">
-            <Label htmlFor="location">Location</Label>
+            <Label htmlFor="location">場所</Label>
             <Input
               id="location"
               value={location}
@@ -497,16 +497,16 @@ export function EventDialog({
               className="text-destructive hover:text-destructive"
               size="icon"
               onClick={handleDelete}
-              aria-label="Delete event"
+              aria-label="イベントを削除"
             >
               <RiDeleteBinLine size={16} aria-hidden="true" />
             </Button>
           )}
           <div className="flex flex-1 justify-end gap-2">
             <Button variant="outline" onClick={onClose}>
-              Cancel
+              キャンセル
             </Button>
-            <Button onClick={handleSave}>Save</Button>
+            <Button onClick={handleSave}>保存</Button>
           </div>
         </DialogFooter>
       </DialogContent>

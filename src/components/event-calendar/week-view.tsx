@@ -17,6 +17,7 @@ import {
   startOfDay,
   startOfWeek,
 } from "date-fns";
+import { ja } from "date-fns/locale";
 
 import {
   DraggableEvent,
@@ -260,9 +261,9 @@ export function WeekView({
             data-today={isToday(day) || undefined}
           >
             <span className="sm:hidden" aria-hidden="true">
-              {format(day, "E")[0]} {format(day, "d")}
+              {format(day, "EEEEE d日", { locale: ja })}
             </span>
-            <span className="max-sm:hidden">{format(day, "EEE dd")}</span>
+            <span className="max-sm:hidden">{format(day, "EEEEE d日", { locale: ja })}</span>
           </div>
         ))}
       </div>

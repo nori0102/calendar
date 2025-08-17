@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { RiCalendarEventLine } from "@remixicon/react";
 import { addDays, format, isToday } from "date-fns";
+import { ja } from "date-fns/locale";
 
 import {
   AgendaDaysToShow,
@@ -31,7 +32,7 @@ interface AgendaViewProps {
  * - 対象期間にイベントが 1 件もなければ空状態（アイコン＋メッセージ）を表示します。
  *
  * @remarks
- * - 日付ラベルは `date-fns/format` の `"d MMM, EEEE"` を使用しています（例: `5 Aug, Tuesday`）。
+ * - 日付ラベルは `date-fns/format` の `"M月d日 EEEE"` を使用しています（例: `8月5日 火曜日`）。
  *   ローカライズが必要なら `format` に `locale` を渡すか、アプリ全体の i18n 設計に合わせて調整してください。
  * - `key` には `toDateString()` を使用し、タイムゾーンによる揺らぎを減らしています。
  * - 期間計算は単純に `currentDate + i 日` で行っています。週区切り等の要件があればここをカスタマイズしてください。
@@ -84,9 +85,9 @@ export function AgendaView({
             className="text-muted-foreground/50 mb-2"
             aria-hidden
           />
-          <h3 className="text-lg font-medium">No events found</h3>
+          <h3 className="text-lg font-medium">イベントが見つかりません</h3>
           <p className="text-muted-foreground">
-            There are no events scheduled for this time period.
+            この期間にはスケジュールされたイベントがありません。
           </p>
         </div>
       ) : (
@@ -103,7 +104,7 @@ export function AgendaView({
                 className="bg-background absolute -top-3 left-0 flex h-6 items-center pe-4 text-[10px] uppercase data-today:font-medium sm:pe-4 sm:text-xs"
                 data-today={isToday(day) || undefined}
               >
-                {format(day, "d MMM, EEEE")}
+                {format(day, "M月d日 EEEE", { locale: ja })}
               </span>
               <div className="mt-6 space-y-2">
                 {dayEvents.map((event) => (

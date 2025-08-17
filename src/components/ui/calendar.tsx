@@ -3,6 +3,7 @@
 import * as React from "react";
 import { ChevronLeftIcon, ChevronRightIcon } from "lucide-react";
 import { DayPicker } from "react-day-picker";
+import { ja } from "date-fns/locale";
 
 import { cn } from "@/lib/utils";
 import { buttonVariants } from "@/components/ui/button";
@@ -12,6 +13,8 @@ function Calendar({
   classNames,
   showOutsideDays = true,
   components: userComponents,
+  locale = ja,
+  weekStartsOn = 0,
   ...props
 }: React.ComponentProps<typeof DayPicker>) {
   const defaultClassNames = {
@@ -84,6 +87,8 @@ function Calendar({
       className={cn("w-fit", className)}
       classNames={mergedClassNames}
       components={mergedComponents}
+      locale={locale}
+      weekStartsOn={weekStartsOn}
       {...props}
     />
   );

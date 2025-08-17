@@ -213,7 +213,7 @@ export function EventItem({
 
   // 時刻表示の組み立て
   const getEventTime = () => {
-    if (event.allDay) return "All day";
+    if (event.allDay) return "終日";
     if (durationMinutes < 45) {
       return formatTimeWithOptionalMinutes(displayStart);
     }
@@ -364,7 +364,7 @@ export function EventItem({
       </div>
       <div className="text-xs opacity-70">
         {event.allDay ? (
-          <span>All day</span>
+          <span>終日</span>
         ) : (
           <span className="uppercase">
             {formatTimeWithOptionalMinutes(displayStart)} -{" "}

@@ -21,31 +21,31 @@ import {
 export const etiquettes = [
   {
     id: "my-events",
-    name: "My Events",
+    name: "個人的なイベント",
     color: "emerald" as EventColor,
     isActive: true,
   },
   {
     id: "marketing-team",
-    name: "Marketing Team",
+    name: "マーケティングチーム",
     color: "orange" as EventColor,
     isActive: true,
   },
   {
     id: "interviews",
-    name: "Interviews",
+    name: "面接",
     color: "violet" as EventColor,
     isActive: true,
   },
   {
     id: "events-planning",
-    name: "Events Planning",
+    name: "イベント企画",
     color: "blue" as EventColor,
     isActive: true,
   },
   {
     id: "japanese-holidays",
-    name: "Japanese Holidays",
+    name: "日本の祝日",
     color: "rose" as EventColor,
     isActive: true,
   },

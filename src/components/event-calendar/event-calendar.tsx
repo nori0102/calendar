@@ -54,8 +54,8 @@ import ThemeToggle from "@/components/theme-toggle";
  * 月/週/日/アジェンダの各ビューを切り替え、イベントの追加・更新・削除をハンドリングします。
  *
  * - **ビュー切替**: ヘッダーのドロップダウンまたはキーボード（M/W/D/A）。
- * - **ナビゲーション**: 前/次/Today ボタンで基準日を移動。
- * - **作成**: 空き枠クリックまたは「New Event」から作成ダイアログを開く（5分刻みにスナップ）。
+ * - **ナビゲーション**: 前/次/今日 ボタンで基準日を移動。
+ * - **作成**: 空き枠クリックまたは「新しいイベント」から作成ダイアログを開く（5分刻みにスナップ）。
  * - **編集**: イベントクリックで編集ダイアログ、DnD で時間/日付移動（`CalendarDndProvider` 経由）。
  * - **通知**: 追加/更新/削除/移動時に `sonner` でトースト表示。
  *
@@ -66,7 +66,7 @@ import ThemeToggle from "@/components/theme-toggle";
  * - スタイルは CSS 変数 `--event-height` / `--event-gap` / `--week-cells-height` をルート要素に設定し、子コンポーネントで参照します。
  *
  * @keyboard
- * - `M` = Month, `W` = Week, `D` = Day, `A` = Agenda（入力中やダイアログ表示中は無効）
+ * - `M` = 月, `W` = 週, `D` = 日, `A` = 予定（入力中やダイアログ表示中は無効）
  *
  * @example
  * ```tsx
@@ -350,7 +350,7 @@ export function EventCalendar({
                 className="max-sm:h-8 max-sm:px-2.5!"
                 onClick={handleToday}
               >
-                Today
+                今日
               </Button>
             </div>
 
@@ -363,7 +363,7 @@ export function EventCalendar({
                   setIsEventDialogOpen(true);
                 }}
               >
-                New Event
+                新しいイベント
               </Button>
 
               <DropdownMenu>
@@ -382,16 +382,16 @@ export function EventCalendar({
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-32">
                   <DropdownMenuItem onClick={() => setView("month")}>
-                    Month <DropdownMenuShortcut>M</DropdownMenuShortcut>
+                    月 <DropdownMenuShortcut>M</DropdownMenuShortcut>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setView("week")}>
-                    Week <DropdownMenuShortcut>W</DropdownMenuShortcut>
+                    週 <DropdownMenuShortcut>W</DropdownMenuShortcut>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setView("day")}>
-                    Day <DropdownMenuShortcut>D</DropdownMenuShortcut>
+                    日 <DropdownMenuShortcut>D</DropdownMenuShortcut>
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setView("agenda")}>
-                    Agenda <DropdownMenuShortcut>A</DropdownMenuShortcut>
+                    予定 <DropdownMenuShortcut>A</DropdownMenuShortcut>
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
