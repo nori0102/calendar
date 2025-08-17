@@ -36,7 +36,7 @@ import { cn } from "@/lib/utils";
  * @property currentDate - 表示基準日（この日を含む週を描画）
  * @property events - すべてのイベント配列（本コンポーネントで週/日別にフィルタ）
  * @property onEventSelect - イベントクリック時のハンドラ
- * @property onEventCreate - グリッドクリック（15分刻み）で新規作成する開始時刻を通知
+ * @property onEventCreate - グリッドクリック（5分刻み）で新規作成する開始時刻を通知
  */
 interface WeekViewProps {
   currentDate: Date;
@@ -65,7 +65,7 @@ interface PositionedEvent {
  * カレンダーの**週表示**コンポーネント。
  *
  * - 上段：終日/マルチデイイベントの行（タイトルはスパンの初日 or 週の最初の可視日で表示）
- * - 下段：時間グリッド（`StartHour`〜`EndHour`、15分刻みの Droppable）
+ * - 下段：時間グリッド（`StartHour`〜`EndHour`、5分刻みの Droppable）
  * - イベントの**重なり解消**は「列割り当て」方式：重なるイベントは別列に配置し、幅/left を調整
  * - 現在時刻インジケーターをその日の列に描画（`useCurrentTimeIndicator`）
  *
@@ -397,7 +397,7 @@ export function WeekView({
               </div>
             )}
 
-            {/* 15分刻みの Droppable セル */}
+            {/* 5分刻みの Droppable セル */}
             {hours.map((hour) => {
               const hourValue = getHours(hour);
               return (
@@ -405,28 +405,33 @@ export function WeekView({
                   key={hour.toString()}
                   className="border-border/70 relative min-h-[var(--week-cells-height)] border-b last:border-b-0"
                 >
-                  {[0, 1, 2, 3].map((quarter) => {
-                    const quarterHourTime = hourValue + quarter * 0.25;
+                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((fiveMinInterval) => {
+                    const fiveMinTime = hourValue + fiveMinInterval * (5/60);
                     return (
                       <DroppableCell
-                        key={`${hour.toString()}-${quarter}`}
-                        id={`week-cell-${day.toISOString()}-${quarterHourTime}`}
+                        key={`${hour.toString()}-${fiveMinInterval}`}
+                        id={`week-cell-${day.toISOString()}-${fiveMinTime}`}
                         date={day}
-                        time={quarterHourTime}
+                        time={fiveMinTime}
                         className={cn(
-                          "absolute h-[calc(var(--week-cells-height)/4)] w-full",
-                          quarter === 0 && "top-0",
-                          quarter === 1 &&
-                            "top-[calc(var(--week-cells-height)/4)]",
-                          quarter === 2 &&
-                            "top-[calc(var(--week-cells-height)/4*2)]",
-                          quarter === 3 &&
-                            "top-[calc(var(--week-cells-height)/4*3)]"
+                          "absolute h-[calc(var(--week-cells-height)/12)] w-full",
+                          fiveMinInterval === 0 && "top-0",
+                          fiveMinInterval === 1 && "top-[calc(var(--week-cells-height)/12)]",
+                          fiveMinInterval === 2 && "top-[calc(var(--week-cells-height)/12*2)]",
+                          fiveMinInterval === 3 && "top-[calc(var(--week-cells-height)/12*3)]",
+                          fiveMinInterval === 4 && "top-[calc(var(--week-cells-height)/12*4)]",
+                          fiveMinInterval === 5 && "top-[calc(var(--week-cells-height)/12*5)]",
+                          fiveMinInterval === 6 && "top-[calc(var(--week-cells-height)/12*6)]",
+                          fiveMinInterval === 7 && "top-[calc(var(--week-cells-height)/12*7)]",
+                          fiveMinInterval === 8 && "top-[calc(var(--week-cells-height)/12*8)]",
+                          fiveMinInterval === 9 && "top-[calc(var(--week-cells-height)/12*9)]",
+                          fiveMinInterval === 10 && "top-[calc(var(--week-cells-height)/12*10)]",
+                          fiveMinInterval === 11 && "top-[calc(var(--week-cells-height)/12*11)]"
                         )}
                         onClick={() => {
                           const startTime = new Date(day);
                           startTime.setHours(hourValue);
-                          startTime.setMinutes(quarter * 15);
+                          startTime.setMinutes(fiveMinInterval * 5);
                           onEventCreate(startTime);
                         }}
                       />

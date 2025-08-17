@@ -60,7 +60,7 @@ interface EventDialogProps {
 /**
  * カレンダーのイベントを作成/編集するダイアログ。
  *
- * - 日付は `Calendar`（単一選択）、時間は **15分刻み** の `Select` を使用。
+ * - 日付は `Calendar`（単一選択）、時間は **5分刻み** の `Select` を使用。
  * - 時間帯イベントは `StartHour`〜`EndHour` の範囲チェックを行い、終日（All day）の場合は 00:00〜23:59:59 として保存。
  * - `end` が `start` より前にならないようバリデーション（同時刻はOK）。
  * - タイトル未入力時は `"(no title)"` を補完。
@@ -143,19 +143,19 @@ export function EventDialog({
     setError(null);
   };
 
-  /** `Date` を `HH:mm`（15分刻み）に整形してセレクト値に使う */
+  /** `Date` を `HH:mm`（5分刻み）に整形してセレクト値に使う */
   const formatTimeForInput = (date: Date) => {
     const hours = date.getHours().toString().padStart(2, "0");
-    const minutes = Math.floor(date.getMinutes() / 15) * 15;
+    const minutes = Math.floor(date.getMinutes() / 5) * 5;
     return `${hours}:${minutes.toString().padStart(2, "0")}`;
-    // ↑ 分は切り捨てで 15 分刻みに正規化。必要なら四捨五入に変更可。
+    // ↑ 分は切り捨てで 5 分刻みに正規化。必要なら四捨五入に変更可。
   };
 
-  /** 時刻選択肢（StartHour〜EndHour、15分刻み） */
+  /** 時刻選択肢（StartHour〜EndHour、5分刻み） */
   const timeOptions = useMemo(() => {
     const options = [];
     for (let hour = StartHour; hour <= EndHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 15) {
+      for (let minute = 0; minute < 60; minute += 5) {
         const formattedHour = hour.toString().padStart(2, "0");
         const formattedMinute = minute.toString().padStart(2, "0");
         const value = `${formattedHour}:${formattedMinute}`;

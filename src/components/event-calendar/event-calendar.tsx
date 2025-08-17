@@ -55,7 +55,7 @@ import ThemeToggle from "@/components/theme-toggle";
  *
  * - **ビュー切替**: ヘッダーのドロップダウンまたはキーボード（M/W/D/A）。
  * - **ナビゲーション**: 前/次/Today ボタンで基準日を移動。
- * - **作成**: 空き枠クリックまたは「New Event」から作成ダイアログを開く（15分刻みにスナップ）。
+ * - **作成**: 空き枠クリックまたは「New Event」から作成ダイアログを開く（5分刻みにスナップ）。
  * - **編集**: イベントクリックで編集ダイアログ、DnD で時間/日付移動（`CalendarDndProvider` 経由）。
  * - **通知**: 追加/更新/削除/移動時に `sonner` でトースト表示。
  *
@@ -179,14 +179,14 @@ export function EventCalendar({
     setIsEventDialogOpen(true); // イベントダイアログを開く
   };
 
-  // 空き枠クリックで新規作成（15分刻みにスナップ）
+  // 空き枠クリックで新規作成（5分刻みにスナップ）
   const handleEventCreate = (startTime: Date) => {
     console.log("Creating new event at:", startTime);
     const minutes = startTime.getMinutes();
-    const remainder = minutes % 15;
+    const remainder = minutes % 5;
     if (remainder !== 0) {
       startTime.setMinutes(
-        remainder < 7.5 ? minutes - remainder : minutes + (15 - remainder)
+        remainder < 2.5 ? minutes - remainder : minutes + (5 - remainder)
       );
       startTime.setSeconds(0);
       startTime.setMilliseconds(0);

@@ -56,12 +56,12 @@ interface PositionedEvent {
  *
  * - `currentDate` の1日分について、終日/マルチデイと時間帯イベントを分けて表示します。
  * - 時間帯イベントは重なりを検出し、段（カラム）に割り当てて `left`/`width` を計算します。
- * - 空き枠クリックで `onEventCreate(startTime)` を呼び出します（15分刻み）。
+ * - 空き枠クリックで `onEventCreate(startTime)` を呼び出します（5分刻み）。
  * - 現在時刻インジケーターをパーセンテージで配置します（`useCurrentTimeIndicator`）。
  *
  * @remarks
  * - 表示時間帯は `StartHour`〜`EndHour` を使用（例：7〜24時）。見た目のセル高は CSS 変数 `--week-cells-height` を参照（型では `WeekCellsHeight`）。
- * - 15分刻みのセルに対して `DroppableCell` を設置。DnD のドロップ先として `date` と `time`（例: `9.5`=9:30）を提供します。
+ * - 5分刻みのセルに対して `DroppableCell` を設置。DnD のドロップ先として `date` と `time`（例: `9.0833`=9:05）を提供します。
  * - 終日・マルチデイはヘッダ行（all-day セクション）にまとめ、スパンの左右端を `isFirstDay`/`isLastDay` で表現します。
  * - ラベルの書式は `format(hour, "h a")`。ローカライズが必要なら `locale` を渡して調整してください。
  *
@@ -312,7 +312,7 @@ export function DayView({
             </div>
           )}
 
-          {/* 15分刻みのドロップ/クリックセル */}
+          {/* 5分刻みのドロップ/クリックセル */}
           {hours.map((hour) => {
             const hourValue = getHours(hour);
             return (
@@ -320,28 +320,33 @@ export function DayView({
                 key={hour.toString()}
                 className="border-border/70 relative h-[var(--week-cells-height)] border-b last:border-b-0"
               >
-                {[0, 1, 2, 3].map((quarter) => {
-                  const quarterHourTime = hourValue + quarter * 0.25;
+                {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((fiveMinInterval) => {
+                  const fiveMinTime = hourValue + fiveMinInterval * (5/60);
                   return (
                     <DroppableCell
-                      key={`${hour.toString()}-${quarter}`}
-                      id={`day-cell-${currentDate.toISOString()}-${quarterHourTime}`}
+                      key={`${hour.toString()}-${fiveMinInterval}`}
+                      id={`day-cell-${currentDate.toISOString()}-${fiveMinTime}`}
                       date={currentDate}
-                      time={quarterHourTime}
+                      time={fiveMinTime}
                       className={cn(
-                        "absolute h-[calc(var(--week-cells-height)/4)] w-full",
-                        quarter === 0 && "top-0",
-                        quarter === 1 &&
-                          "top-[calc(var(--week-cells-height)/4)]",
-                        quarter === 2 &&
-                          "top-[calc(var(--week-cells-height)/4*2)]",
-                        quarter === 3 &&
-                          "top-[calc(var(--week-cells-height)/4*3)]"
+                        "absolute h-[calc(var(--week-cells-height)/12)] w-full",
+                        fiveMinInterval === 0 && "top-0",
+                        fiveMinInterval === 1 && "top-[calc(var(--week-cells-height)/12)]",
+                        fiveMinInterval === 2 && "top-[calc(var(--week-cells-height)/12*2)]",
+                        fiveMinInterval === 3 && "top-[calc(var(--week-cells-height)/12*3)]",
+                        fiveMinInterval === 4 && "top-[calc(var(--week-cells-height)/12*4)]",
+                        fiveMinInterval === 5 && "top-[calc(var(--week-cells-height)/12*5)]",
+                        fiveMinInterval === 6 && "top-[calc(var(--week-cells-height)/12*6)]",
+                        fiveMinInterval === 7 && "top-[calc(var(--week-cells-height)/12*7)]",
+                        fiveMinInterval === 8 && "top-[calc(var(--week-cells-height)/12*8)]",
+                        fiveMinInterval === 9 && "top-[calc(var(--week-cells-height)/12*9)]",
+                        fiveMinInterval === 10 && "top-[calc(var(--week-cells-height)/12*10)]",
+                        fiveMinInterval === 11 && "top-[calc(var(--week-cells-height)/12*11)]"
                       )}
                       onClick={() => {
                         const startTime = new Date(currentDate);
                         startTime.setHours(hourValue);
-                        startTime.setMinutes(quarter * 15);
+                        startTime.setMinutes(fiveMinInterval * 5);
                         onEventCreate(startTime);
                       }}
                     />
