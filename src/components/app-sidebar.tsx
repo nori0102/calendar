@@ -23,16 +23,11 @@ import {
 import SidebarCalendar from "@/components/sidebar-calendar";
 import { Checkbox } from "@/components/ui/checkbox";
 
-/**
- * サイドバー内で表示するダミーユーザー情報。
- * 実運用では認証システムから取得/注入する想定。
- */
 const data = {
   user: {
-    name: "Sofia Safier",
-    email: "sofia@safier.com",
-    avatar:
-      "https://raw.githubusercontent.com/origin-space/origin-images/refs/heads/main/exp6/user-01_l4if9t.png",
+    name: "User",
+    email: "user@example.com",
+    avatar: "",
   },
 };
 

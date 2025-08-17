@@ -122,7 +122,7 @@ export function EventDialog({
       setEndTime(formatTimeForInput(end));
       setAllDay(event.allDay || false);
       setLocation(event.location || "");
-      setColor((event.color as EventColor) || "sky");
+      setColor((event.color as EventColor) || "blue");
       setError(null);
     } else {
       resetForm();
@@ -155,12 +155,13 @@ export function EventDialog({
   const timeOptions = useMemo(() => {
     const options = [];
     for (let hour = StartHour; hour <= EndHour; hour++) {
-      for (let minute = 0; minute < 60; minute += 5) {
+      // 24時の場合は00分のみ（24:05~24:55を除外）
+      const maxMinute = hour === 24 ? 0 : 59;
+      for (let minute = 0; minute <= maxMinute; minute += 5) {
         const formattedHour = hour.toString().padStart(2, "0");
         const formattedMinute = minute.toString().padStart(2, "0");
         const value = `${formattedHour}:${formattedMinute}`;
-        const date = new Date(2000, 0, 1, hour, minute); // 固定日付でフォーマット
-        const label = format(date, minute === 0 ? "H時" : "H:mm");
+        const label = `${formattedHour}:${formattedMinute}`;
         options.push({ value, label });
       }
     }
@@ -169,6 +170,12 @@ export function EventDialog({
 
   /** 保存クリック：入力値を CalendarEvent にまとめて onSave */
   const handleSave = () => {
+    // タイトル必須チェック
+    if (!title.trim()) {
+      setError("タイトルを入力してください");
+      return;
+    }
+
     const start = new Date(startDate);
     const end = new Date(endDate);
 
@@ -205,12 +212,9 @@ export function EventDialog({
       return;
     }
 
-    // タイトル未入力時のフォールバック
-    const eventTitle = title.trim() ? title : "（タイトルなし）";
-
     onSave({
       id: event?.id || "",
-      title: eventTitle,
+      title: title.trim(),
       description,
       start,
       end,
@@ -468,7 +472,7 @@ export function EventDialog({
             </legend>
             <RadioGroup
               className="flex gap-1.5"
-              defaultValue={colorOptions[0]?.value}
+              defaultValue="blue"
               value={color}
               onValueChange={(value: EventColor) => setColor(value)}
             >

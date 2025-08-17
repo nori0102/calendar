@@ -14,11 +14,11 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * 分が 0 の場合は「H時」、そうでない場合は「H:mm」で時刻をフォーマットする関数。
- * 例: 9時, 9:15
+ * 時刻を「H:mm」形式でフォーマットする関数。
+ * 例: 9:00, 9:15
  */
 const formatTimeWithOptionalMinutes = (date: Date) => {
-  return format(date, getMinutes(date) === 0 ? "H時" : "H:mm");
+  return format(date, "H:mm");
 };
 
 /**
