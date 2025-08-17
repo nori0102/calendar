@@ -10,9 +10,9 @@ export const WeekCellsHeight = 72;
 export const AgendaDaysToShow = 30;
 
 // Start and end hours for the week and day views
-export const StartHour = 0; // Start at 7 AM
-export const EndHour = 24; // End at 8 PM
+export const StartHour = 0; // 0時開始
+export const EndHour = 24; // 24時終了
 
-// Default start and end times
-export const DefaultStartHour = 9; // 9 AM
-export const DefaultEndHour = 10; // 10 AM
+// デフォルトの開始・終了時刻
+export const DefaultStartHour = 9; // 9時
+export const DefaultEndHour = 10; // 10時

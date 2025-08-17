@@ -14,11 +14,11 @@ import {
 import { cn } from "@/lib/utils";
 
 /**
- * 分が 0 の場合は「h a」、そうでない場合は「h:mm a」で時刻をフォーマットする関数。
- * 例: 9am, 9:15am
+ * 分が 0 の場合は「H時」、そうでない場合は「H:mm」で時刻をフォーマットする関数。
+ * 例: 9時, 9:15
  */
 const formatTimeWithOptionalMinutes = (date: Date) => {
-  return format(date, getMinutes(date) === 0 ? "ha" : "h:mma").toLowerCase();
+  return format(date, getMinutes(date) === 0 ? "H時" : "H:mm");
 };
 
 /**

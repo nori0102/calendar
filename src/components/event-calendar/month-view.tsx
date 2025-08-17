@@ -7,6 +7,7 @@ import {
   endOfMonth,
   endOfWeek,
   format,
+  getMinutes,
   isSameDay,
   isSameMonth,
   isToday,
@@ -236,7 +237,7 @@ export function MonthView({
                                 <div className="invisible" aria-hidden={true}>
                                   {!event.allDay && (
                                     <span>
-                                      {format(new Date(event.start), "h:mm")}{" "}
+                                      {format(new Date(event.start), getMinutes(new Date(event.start)) === 0 ? "H時" : "H:mm")}{" "}
                                     </span>
                                   )}
                                   {event.title}

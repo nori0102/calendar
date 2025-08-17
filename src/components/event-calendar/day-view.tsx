@@ -63,7 +63,7 @@ interface PositionedEvent {
  * - 表示時間帯は `StartHour`〜`EndHour` を使用（例：7〜24時）。見た目のセル高は CSS 変数 `--week-cells-height` を参照（型では `WeekCellsHeight`）。
  * - 5分刻みのセルに対して `DroppableCell` を設置。DnD のドロップ先として `date` と `time`（例: `9.0833`=9:05）を提供します。
  * - 終日・マルチデイはヘッダ行（all-day セクション）にまとめ、スパンの左右端を `isFirstDay`/`isLastDay` で表現します。
- * - ラベルの書式は `format(hour, "h a")`。ローカライズが必要なら `locale` を渡して調整してください。
+ * - ラベルの書式は `format(hour, "H時")`。24時間表記の日本語形式を使用します。
  *
  * @example
  * ```tsx
@@ -265,7 +265,7 @@ export function DayView({
             >
               {index > 0 && (
                 <span className="bg-background text-muted-foreground/70 absolute -top-3 left-0 flex h-6 w-16 max-w-full items-center justify-end pe-2 text-[10px] sm:pe-4 sm:text-xs">
-                  {format(hour, "h a")}
+                  {format(hour, "H時")}
                 </span>
               )}
             </div>

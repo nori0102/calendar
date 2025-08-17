@@ -160,7 +160,7 @@ export function EventDialog({
         const formattedMinute = minute.toString().padStart(2, "0");
         const value = `${formattedHour}:${formattedMinute}`;
         const date = new Date(2000, 0, 1, hour, minute); // 固定日付でフォーマット
-        const label = format(date, "h:mm a");
+        const label = format(date, minute === 0 ? "H時" : "H:mm");
         options.push({ value, label });
       }
     }
