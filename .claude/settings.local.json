@@ -1,9 +1,14 @@
 {
   "permissions": {
-    "allow": [
-      "Bash(npm run dev:*)"
+    "defaultMode": "default",
+    "deny": [
+      "Read(./.env)",
+      "Read(./.env.*)",
+      "Read(./**/.env)",
+      "Read(./**/.env.*)",
+      "Read(./secrets/**)"
     ],
-    "deny": [],
+    "allow": ["Bash(npm run dev:*)"],
     "ask": []
   }
 }

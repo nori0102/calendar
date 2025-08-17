@@ -36,6 +36,8 @@ import {
   WeekCellsHeight,
   WeekView,
 } from "@/components/event-calendar";
+import { EventCreationChoiceDialog } from "@/components/event-calendar/event-creation-choice-dialog";
+import { AISuggestionDialog } from "@/components/event-calendar/ai-suggestion-dialog";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -116,6 +118,13 @@ export function EventCalendar({
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
+  
+  /** 中間選択ダイアログの状態 */
+  const [isChoiceDialogOpen, setIsChoiceDialogOpen] = useState(false);
+  /** AI提案ダイアログの状態 */
+  const [isAISuggestionOpen, setIsAISuggestionOpen] = useState(false);
+  /** 選択された日時（イベント作成用） */
+  const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
   const { open } = useSidebar();
 
   // ビュー切替のキーボードショートカット（入力中/ダイアログ時は無効）
@@ -124,6 +133,8 @@ export function EventCalendar({
       // 入力中やダイアログが開いている場合は無視
       if (
         isEventDialogOpen ||
+        isChoiceDialogOpen ||
+        isAISuggestionOpen ||
         e.target instanceof HTMLInputElement ||
         e.target instanceof HTMLTextAreaElement ||
         (e.target instanceof HTMLElement && e.target.isContentEditable)
@@ -149,7 +160,7 @@ export function EventCalendar({
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isEventDialogOpen]);
+  }, [isEventDialogOpen, isChoiceDialogOpen, isAISuggestionOpen]);
 
   // ナビゲーション: 前へ
   const handlePrevious = () => {
@@ -191,14 +202,87 @@ export function EventCalendar({
       startTime.setSeconds(0);
       startTime.setMilliseconds(0);
     }
+    
+    // 中間選択ダイアログを表示
+    setSelectedDateTime(startTime);
+    setIsChoiceDialogOpen(true);
+  };
+
+  // 手動作成を選択した場合（既存の動作）
+  const handleManualCreate = () => {
+    if (!selectedDateTime) return;
+    
     const newEvent: CalendarEvent = {
       id: "",
       title: "",
-      start: startTime,
-      end: addHoursToDate(startTime, 1),
+      start: selectedDateTime,
+      end: addHoursToDate(selectedDateTime, 1),
       allDay: false,
     };
     setSelectedEvent(newEvent);
+    setIsChoiceDialogOpen(false);
+    setIsEventDialogOpen(true);
+  };
+
+  // AI提案を選択した場合
+  const handleAICreate = () => {
+    console.log("AI suggestion selected");
+    setIsChoiceDialogOpen(false);
+    setIsAISuggestionOpen(true);
+  };
+
+  // 中間選択ダイアログを閉じる
+  const handleChoiceDialogClose = () => {
+    setIsChoiceDialogOpen(false);
+    setSelectedDateTime(null);
+  };
+
+  // AI提案ダイアログを閉じる
+  const handleAISuggestionClose = () => {
+    setIsAISuggestionOpen(false);
+    setSelectedDateTime(null);
+  };
+
+  // AI提案から手動作成に移行
+  const handleAIToManualCreate = () => {
+    setIsAISuggestionOpen(false);
+    handleManualCreate();
+  };
+
+  // AI提案を選択してイベント作成  
+  const handleSuggestionSelect = (
+    suggestion: { title: string; description: string; location: string },
+    timeInfo: { startTime: string; endTime: string }
+  ) => {
+    if (!selectedDateTime) return;
+    
+    // 指定された時間でイベントの開始・終了時刻を作成
+    const baseDate = selectedDateTime;
+    const [startHour, startMin] = timeInfo.startTime.split(':').map(Number);
+    const [endHour, endMin] = timeInfo.endTime.split(':').map(Number);
+    
+    const startDate = new Date(baseDate);
+    startDate.setHours(startHour, startMin, 0, 0);
+    
+    const endDate = new Date(baseDate);
+    endDate.setHours(endHour, endMin, 0, 0);
+    
+    // 終了時刻が開始時刻より前の場合、翌日とする
+    if (endDate <= startDate) {
+      endDate.setDate(endDate.getDate() + 1);
+    }
+    
+    const newEvent: CalendarEvent = {
+      id: "",
+      title: suggestion.title,
+      description: suggestion.description,
+      start: startDate,
+      end: endDate,
+      allDay: false,
+      location: suggestion.location,
+    };
+    setSelectedEvent(newEvent);
+    setIsAISuggestionOpen(false);
     setIsEventDialogOpen(true);
   };
 
@@ -435,7 +519,25 @@ export function EventCalendar({
           )}
         </div>
 
-        {/* Dialog */}
+        {/* Dialogs */}
+        <EventCreationChoiceDialog
+          isOpen={isChoiceDialogOpen}
+          selectedDate={selectedDateTime || new Date()}
+          selectedTime={selectedDateTime || undefined}
+          onClose={handleChoiceDialogClose}
+          onManualCreate={handleManualCreate}
+          onAICreate={handleAICreate}
+        />
+        
+        <AISuggestionDialog
+          isOpen={isAISuggestionOpen}
+          selectedDate={selectedDateTime || new Date()}
+          selectedTime={selectedDateTime || undefined}
+          onClose={handleAISuggestionClose}
+          onSuggestionSelect={handleSuggestionSelect}
+          onManualCreate={handleAIToManualCreate}
+        />
+        
         <EventDialog
           event={selectedEvent}
           isOpen={isEventDialogOpen}
