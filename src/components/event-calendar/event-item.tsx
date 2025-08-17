@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { differenceInMinutes, format, getMinutes, isPast } from "date-fns";
+import { Calendar } from "lucide-react";
 
 import {
   getBorderRadiusClasses,
@@ -18,6 +19,13 @@ import { cn } from "@/lib/utils";
  */
 const formatTimeWithOptionalMinutes = (date: Date) => {
   return format(date, getMinutes(date) === 0 ? "ha" : "h:mma").toLowerCase();
+};
+
+/**
+ * イベントが祝日かどうかを判定する関数
+ */
+const isHolidayEvent = (event: CalendarEvent): boolean => {
+  return event.id.startsWith('holiday-');
 };
 
 interface EventWrapperProps {
@@ -75,6 +83,35 @@ function EventWrapper({
     : new Date(event.end);
 
   const isEventInPast = isPast(displayEnd);
+  const isHoliday = isHolidayEvent(event);
+
+  // 祝日の場合はクリックイベントを無効化
+  const handleClick = (e: React.MouseEvent) => {
+    if (isHoliday) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onClick?.(e);
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (isHoliday) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onMouseDown?.(e);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (isHoliday) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onTouchStart?.(e);
+  };
 
   return (
     <button
@@ -82,15 +119,16 @@ function EventWrapper({
         "focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full overflow-hidden px-1 text-left font-medium backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] data-dragging:cursor-grabbing data-dragging:shadow-lg data-past-event:line-through sm:px-2",
         getEventColorClasses(event.color),
         getBorderRadiusClasses(isFirstDay, isLastDay),
+        isHoliday && "cursor-default",
         className
       )}
       data-dragging={isDragging || undefined}
       data-past-event={isEventInPast || undefined}
-      onClick={onClick}
-      onMouseDown={onMouseDown}
-      onTouchStart={onTouchStart}
-      {...dndListeners}
-      {...dndAttributes}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
+      {...(isHoliday ? {} : dndListeners)}
+      {...(isHoliday ? {} : dndAttributes)}
     >
       {children}
     </button>
@@ -204,13 +242,16 @@ export function EventItem({
         onTouchStart={onTouchStart}
       >
         {children || (
-          <span className="truncate">
+          <span className="truncate flex items-center gap-1">
+            {isHolidayEvent(event) && (
+              <Calendar className="h-3 w-3 shrink-0" />
+            )}
             {!event.allDay && (
               <span className="truncate sm:text-xs font-normal opacity-70 uppercase">
                 {formatTimeWithOptionalMinutes(displayStart)}{" "}
               </span>
             )}
-            {event.title}
+            <span className="truncate">{event.title}</span>
           </span>
         )}
       </EventWrapper>
@@ -239,8 +280,11 @@ export function EventItem({
         onTouchStart={onTouchStart}
       >
         {durationMinutes < 45 ? (
-          <div className="truncate">
-            {event.title}{" "}
+          <div className="truncate flex items-center gap-1">
+            {isHolidayEvent(event) && (
+              <Calendar className="h-3 w-3 shrink-0" />
+            )}
+            <span className="truncate">{event.title}</span>{" "}
             {showTime && (
               <span className="opacity-70">
                 {formatTimeWithOptionalMinutes(displayStart)}
@@ -249,7 +293,12 @@ export function EventItem({
           </div>
         ) : (
           <>
-            <div className="truncate font-medium">{event.title}</div>
+            <div className="truncate font-medium flex items-center gap-1">
+              {isHolidayEvent(event) && (
+                <Calendar className="h-3 w-3 shrink-0" />
+              )}
+              <span className="truncate">{event.title}</span>
+            </div>
             {showTime && (
               <div className="truncate font-normal opacity-70 sm:text-xs uppercase">
                 {getEventTime()}
@@ -262,21 +311,57 @@ export function EventItem({
   }
 
   // Agendaビュー
+  const isHoliday = isHolidayEvent(event);
+
+  // 祝日の場合はクリックイベントを無効化
+  const handleAgendaClick = (e: React.MouseEvent) => {
+    if (isHoliday) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onClick?.(e);
+  };
+
+  const handleAgendaMouseDown = (e: React.MouseEvent) => {
+    if (isHoliday) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onMouseDown?.(e);
+  };
+
+  const handleAgendaTouchStart = (e: React.TouchEvent) => {
+    if (isHoliday) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onTouchStart?.(e);
+  };
+
   return (
     <button
       className={cn(
         "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-1 rounded p-2 text-left transition outline-none focus-visible:ring-[3px] data-past-event:line-through data-past-event:opacity-90",
         getEventColorClasses(eventColor),
+        isHoliday && "cursor-default",
         className
       )}
       data-past-event={isPast(new Date(event.end)) || undefined}
-      onClick={onClick}
-      onMouseDown={onMouseDown}
-      onTouchStart={onTouchStart}
-      {...dndListeners}
-      {...dndAttributes}
+      onClick={handleAgendaClick}
+      onMouseDown={handleAgendaMouseDown}
+      onTouchStart={handleAgendaTouchStart}
+      {...(isHoliday ? {} : dndListeners)}
+      {...(isHoliday ? {} : dndAttributes)}
     >
-      <div className="text-sm font-medium">{event.title}</div>
+      <div className="text-sm font-medium flex items-center gap-1">
+        {isHolidayEvent(event) && (
+          <Calendar className="h-3 w-3 shrink-0" />
+        )}
+        <span className="truncate">{event.title}</span>
+      </div>
       <div className="text-xs opacity-70">
         {event.allDay ? (
           <span>All day</span>

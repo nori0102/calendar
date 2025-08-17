@@ -3,6 +3,7 @@
 import { useState, useMemo } from "react";
 import { addDays, setHours, setMinutes, getDay } from "date-fns";
 import { useCalendarContext } from "@/components/event-calendar/calendar-context";
+import { useHolidays } from "@/hooks/use-holidays";
 
 import {
   EventCalendar,
@@ -43,8 +44,8 @@ export const etiquettes = [
     isActive: true,
   },
   {
-    id: "holidays",
-    name: "Holidays",
+    id: "japanese-holidays",
+    name: "Japanese Holidays",
     color: "rose" as EventColor,
     isActive: true,
   },
@@ -613,13 +614,37 @@ const sampleEvents: CalendarEvent[] = [
 export default function Component() {
   const [events, setEvents] = useState<CalendarEvent[]>(sampleEvents);
   const { isColorVisible } = useCalendarContext();
+  const { holidays, loading: holidaysLoading } = useHolidays();
+
+  /**
+   * 祝日をCalendarEventに変換
+   */
+  const holidayEvents: CalendarEvent[] = useMemo(() => {
+    return holidays.map((holiday) => ({
+      id: `holiday-${holiday.date}`,
+      title: holiday.name,
+      description: `日本の祝日: ${holiday.name}`,
+      start: holiday.dateObject,
+      end: holiday.dateObject,
+      allDay: true,
+      color: "rose" as EventColor,
+      location: undefined,
+    }));
+  }, [holidays]);
+
+  /**
+   * 全イベント（サンプル + 祝日）
+   */
+  const allEvents = useMemo(() => {
+    return [...events, ...holidayEvents];
+  }, [events, holidayEvents]);
 
   /**
    * 現在表示すべきイベント（色フィルタ適用後）
    */
   const visibleEvents = useMemo(() => {
-    return events.filter((event) => isColorVisible(event.color));
-  }, [events, isColorVisible]);
+    return allEvents.filter((event) => isColorVisible(event.color));
+  }, [allEvents, isColorVisible]);
 
   /**
    * 新規イベント追加
@@ -640,9 +665,14 @@ export default function Component() {
   };
 
   /**
-   * イベント削除
+   * イベント削除（祝日は削除不可）
    */
   const handleEventDelete = (eventId: string) => {
+    // 祝日の削除を防ぐ
+    if (eventId.startsWith('holiday-')) {
+      console.warn('祝日は削除できません');
+      return;
+    }
     setEvents(events.filter((event) => event.id !== eventId));
   };
 
