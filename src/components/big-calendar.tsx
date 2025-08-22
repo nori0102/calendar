@@ -75,7 +75,18 @@ const sampleEvents: CalendarEvent[] = [];
  * - カラーの表示/非表示は `useCalendarContext` の状態に依存
  */
 export default function Component() {
-  const [events, setEvents] = useState<CalendarEvent[]>(sampleEvents);
+  const [events, setEvents] = useState<CalendarEvent[]>(() => {
+    // LocalStorageからイベントデータを読み込み
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("calendar-events");
+        return saved ? JSON.parse(saved) : sampleEvents;
+      } catch {
+        return sampleEvents;
+      }
+    }
+    return sampleEvents;
+  });
   const { isColorVisible } = useCalendarContext();
   const { holidays, loading: holidaysLoading } = useHolidays();
 
@@ -110,21 +121,36 @@ export default function Component() {
   }, [allEvents, isColorVisible]);
 
   /**
+   * LocalStorageにイベントデータを保存
+   */
+  const saveEventsToStorage = (newEvents: CalendarEvent[]) => {
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("calendar-events", JSON.stringify(newEvents));
+      } catch (error) {
+        console.error("Failed to save events to localStorage:", error);
+      }
+    }
+  };
+
+  /**
    * 新規イベント追加
    */
   const handleEventAdd = (event: CalendarEvent) => {
-    setEvents([...events, event]);
+    const newEvents = [...events, event];
+    setEvents(newEvents);
+    saveEventsToStorage(newEvents);
   };
 
   /**
    * イベント更新
    */
   const handleEventUpdate = (updatedEvent: CalendarEvent) => {
-    setEvents(
-      events.map((event) =>
-        event.id === updatedEvent.id ? updatedEvent : event
-      )
+    const newEvents = events.map((event) =>
+      event.id === updatedEvent.id ? updatedEvent : event
     );
+    setEvents(newEvents);
+    saveEventsToStorage(newEvents);
   };
 
   /**
@@ -136,7 +162,9 @@ export default function Component() {
       console.warn('祝日は削除できません');
       return;
     }
-    setEvents(events.filter((event) => event.id !== eventId));
+    const newEvents = events.filter((event) => event.id !== eventId);
+    setEvents(newEvents);
+    saveEventsToStorage(newEvents);
   };
 
   return (

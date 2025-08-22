@@ -35,7 +35,19 @@ export function useCalendarContext() {
  * 日付や色ラベル（タグ）の可視状態などの共有状態を管理する
  */
 export function CalendarProvider({ children }: { children: ReactNode }) {
-  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [currentDate, setCurrentDate] = useState<Date>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("calendar-current-date");
+        if (saved) {
+          return new Date(saved);
+        }
+      } catch {
+        // パースエラーの場合は現在日時を使用
+      }
+    }
+    return new Date();
+  });
 
   // 初期状態では、etiquetteのisActiveがtrueのもののcolorをvisibleColorsに設定
   // これにより、初期表示ではアクティブな色ラベルのみが表示される
@@ -72,9 +84,21 @@ export function CalendarProvider({ children }: { children: ReactNode }) {
     return visibleColors.includes(color);
   };
 
+  // 日付変更時にLocalStorageに保存
+  const handleSetCurrentDate = (date: Date) => {
+    setCurrentDate(date);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("calendar-current-date", date.toISOString());
+      } catch (error) {
+        console.error("Failed to save current date to localStorage:", error);
+      }
+    }
+  };
+
   const value = {
     currentDate,
-    setCurrentDate,
+    setCurrentDate: handleSetCurrentDate,
     visibleColors,
     toggleColorVisibility,
     isColorVisible,

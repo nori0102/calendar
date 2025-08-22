@@ -42,7 +42,19 @@ export function EventCalendar({
   initialView = "month",
 }: EventCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarContext();
-  const [view, setView] = useState<CalendarView>(initialView);
+  const [view, setView] = useState<CalendarView>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        const saved = localStorage.getItem("calendar-view");
+        if (saved && ["month", "week", "day", "agenda"].includes(saved)) {
+          return saved as CalendarView;
+        }
+      } catch {
+        // パースエラーの場合はinitialViewを使用
+      }
+    }
+    return initialView;
+  });
 
   const {
     isEventDialogOpen,
@@ -72,13 +84,25 @@ export function EventCalendar({
     view,
   });
 
+  // ビュー変更時にLocalStorageに保存
+  const handleSetView = (newView: CalendarView) => {
+    setView(newView);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem("calendar-view", newView);
+      } catch (error) {
+        console.error("Failed to save view to localStorage:", error);
+      }
+    }
+  };
+
   const viewTitle = getViewTitle(currentDate, view);
 
   useKeyboardShortcuts({
     isEventDialogOpen,
     isChoiceDialogOpen,
     isAISuggestionOpen,
-    setView,
+    setView: handleSetView,
   });
 
 
@@ -95,7 +119,7 @@ export function EventCalendar({
           onPrevious={handlePrevious}
           onNext={handleNext}
           onToday={handleToday}
-          onViewChange={setView}
+          onViewChange={handleSetView}
           onNewEvent={handleNewEventClick}
           className={className}
         />
