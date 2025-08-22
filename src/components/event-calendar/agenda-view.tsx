@@ -36,15 +36,6 @@ interface AgendaViewProps {
  *   ローカライズが必要なら `format` に `locale` を渡すか、アプリ全体の i18n 設計に合わせて調整してください。
  * - `key` には `toDateString()` を使用し、タイムゾーンによる揺らぎを減らしています。
  * - 期間計算は単純に `currentDate + i 日` で行っています。週区切り等の要件があればここをカスタマイズしてください。
- *
- * @example
- * ```tsx
- * <AgendaView
- *   currentDate={new Date()}
- *   events={allEvents}
- *   onEventSelect={(evt) => setSelectedEvent(evt)}
- * />
- * ```
  */
 export function AgendaView({
   currentDate,

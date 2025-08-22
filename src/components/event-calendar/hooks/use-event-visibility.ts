@@ -39,26 +39,6 @@ interface EventVisibilityResult {
  * - `contentRef`: 高さ測定対象に付与する ref
  * - `contentHeight`: 現在のコンテナ高さ（px）
  * - `getVisibleEventCount(total)`: 表示可能なイベント件数を返す
- *
- * @example
- * ```tsx
- * const { contentRef, getVisibleEventCount } = useEventVisibility({
- *   eventHeight: 28,
- *   eventGap: 4,
- * });
- *
- * const visibleCount = getVisibleEventCount(events.length);
- * const visibleEvents = events.slice(0, visibleCount);
- *
- * return (
- *   <div ref={contentRef} className="h-full overflow-hidden">
- *     {visibleEvents.map(e => <EventRow key={e.id} event={e} />)}
- *     {events.length > visibleCount && (
- *       <button className="mt-1 text-xs underline">もっと見る</button>
- *     )}
- *   </div>
- * );
- * ```
  */
 export function useEventVisibility({
   eventHeight,

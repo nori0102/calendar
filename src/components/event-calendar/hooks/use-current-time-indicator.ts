@@ -29,24 +29,6 @@ import { StartHour, EndHour } from "@/components/event-calendar/constants";
  * @returns オブジェクト
  * - `currentTimePosition`：現在時刻インジケーターの縦位置（0〜100の数値、単位は%）
  * - `currentTimeVisible`：インジケーターを表示すべきかどうかのフラグ
- *
- * @example
- * ```tsx
- * const { currentTimePosition, currentTimeVisible } =
- *   useCurrentTimeIndicator(currentDate, "week");
- *
- * return (
- *   <div className="relative h-full">
- *     {currentTimeVisible && (
- *       <div
- *         aria-hidden
- *         className="absolute left-0 right-0 h-px bg-red-500"
- *         style={{ top: `${currentTimePosition}%` }}
- *       />
- *     )}
- *   </div>
- * );
- * ```
  */
 export function useCurrentTimeIndicator(
   currentDate: Date,

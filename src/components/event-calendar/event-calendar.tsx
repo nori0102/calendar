@@ -69,19 +69,6 @@ import ThemeToggle from "@/components/theme-toggle";
  *
  * @keyboard
  * - `M` = 月, `W` = 週, `D` = 日, `A` = 予定（入力中やダイアログ表示中は無効）
- *
- * @example
- * ```tsx
- * <CalendarProvider>
- *   <EventCalendar
- *     events={events}
- *     onEventAdd={(e) => setEvents([...events, e])}
- *     onEventUpdate={(e) => setEvents(events.map(x => x.id === e.id ? e : x))}
- *     onEventDelete={(id) => setEvents(events.filter(x => x.id !== id))}
- *     initialView="month"
- *   />
- * </CalendarProvider>
- * ```
  */
 export interface EventCalendarProps {
   /** 描画対象のイベント配列 */
@@ -118,7 +105,7 @@ export function EventCalendar({
   const [selectedEvent, setSelectedEvent] = useState<CalendarEvent | null>(
     null
   );
-  
+
   /** 中間選択ダイアログの状態 */
   const [isChoiceDialogOpen, setIsChoiceDialogOpen] = useState(false);
   /** AI提案ダイアログの状態 */
@@ -202,7 +189,7 @@ export function EventCalendar({
       startTime.setSeconds(0);
       startTime.setMilliseconds(0);
     }
-    
+
     // 中間選択ダイアログを表示
     setSelectedDateTime(startTime);
     setIsChoiceDialogOpen(true);
@@ -211,7 +198,7 @@ export function EventCalendar({
   // 手動作成を選択した場合（既存の動作）
   const handleManualCreate = () => {
     if (!selectedDateTime) return;
-    
+
     const newEvent: CalendarEvent = {
       id: "",
       title: "",
@@ -249,29 +236,29 @@ export function EventCalendar({
     handleManualCreate();
   };
 
-  // AI提案を選択してイベント作成  
+  // AI提案を選択してイベント作成
   const handleSuggestionSelect = (
     suggestion: { title: string; description: string; location: string },
     timeInfo: { startTime: string; endTime: string }
   ) => {
     if (!selectedDateTime) return;
-    
+
     // 指定された時間でイベントの開始・終了時刻を作成
     const baseDate = selectedDateTime;
     const [startHour, startMin] = timeInfo.startTime.split(':').map(Number);
     const [endHour, endMin] = timeInfo.endTime.split(':').map(Number);
-    
+
     const startDate = new Date(baseDate);
     startDate.setHours(startHour, startMin, 0, 0);
-    
+
     const endDate = new Date(baseDate);
     endDate.setHours(endHour, endMin, 0, 0);
-    
+
     // 終了時刻が開始時刻より前の場合、翌日とする
     if (endDate <= startDate) {
       endDate.setDate(endDate.getDate() + 1);
     }
-    
+
     const newEvent: CalendarEvent = {
       id: "",
       title: suggestion.title,
@@ -405,7 +392,6 @@ export function EventCalendar({
                 {viewTitle}
               </h2>
             </div>
-            {/* <Participants /> */}
           </div>
 
           <div className="flex items-center justify-between gap-2">
@@ -528,7 +514,7 @@ export function EventCalendar({
           onManualCreate={handleManualCreate}
           onAICreate={handleAICreate}
         />
-        
+
         <AISuggestionDialog
           isOpen={isAISuggestionOpen}
           selectedDate={selectedDateTime || new Date()}
@@ -537,7 +523,7 @@ export function EventCalendar({
           onSuggestionSelect={handleSuggestionSelect}
           onManualCreate={handleAIToManualCreate}
         />
-        
+
         <EventDialog
           event={selectedEvent}
           isOpen={isEventDialogOpen}
