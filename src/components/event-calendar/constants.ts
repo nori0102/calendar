@@ -16,3 +16,10 @@ export const EndHour = 24; // 24時終了
 // デフォルトの開始・終了時刻
 export const DefaultStartHour = 9; // 9時
 export const DefaultEndHour = 10; // 10時
+
+// CSS variables for calendar styling
+export const CALENDAR_CSS_VARIABLES = {
+  "--event-height": `${EventHeight}px`,
+  "--event-gap": `${EventGap}px`,
+  "--week-cells-height": `${WeekCellsHeight}px`,
+} as React.CSSProperties;
