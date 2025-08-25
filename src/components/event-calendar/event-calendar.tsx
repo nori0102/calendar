@@ -1,17 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { useCalendarContext } from "./calendar-context";
+import { useCalendarContext } from "@/contexts/calendar-context";
 import { CalendarDndProvider, CalendarView } from "@/components/event-calendar";
 import { CalendarHeader } from "@/components/event-calendar/calendar-header";
 import { CalendarViews } from "@/components/event-calendar/calendar-views";
 import { CalendarDialogs } from "@/components/event-calendar/calendar-dialogs";
-import { useEventHandlers } from "@/components/event-calendar/use-event-handlers";
-import { useNavigation } from "@/components/event-calendar/use-navigation";
-import { useKeyboardShortcuts } from "@/components/event-calendar/use-keyboard-shortcuts";
+import { useEventHandlers } from "@/hooks/calendar/use-event-handlers";
+import { useNavigation } from "@/hooks/calendar/use-navigation";
+import { useKeyboardShortcuts } from "@/hooks/calendar/use-keyboard-shortcuts";
 import { getViewTitle } from "@/components/event-calendar/utils/view-title";
 import { CALENDAR_CSS_VARIABLES } from "@/components/event-calendar/constants";
-import { EventCalendarProps } from "@/components/event-calendar/types";
+import { EventCalendarProps } from "@/types/calendar";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 /**
  * カレンダー UI のルートコンポーネント。
@@ -42,19 +43,7 @@ export function EventCalendar({
   initialView = "month",
 }: EventCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarContext();
-  const [view, setView] = useState<CalendarView>(() => {
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("calendar-view");
-        if (saved && ["month", "week", "day", "agenda"].includes(saved)) {
-          return saved as CalendarView;
-        }
-      } catch {
-        // パースエラーの場合はinitialViewを使用
-      }
-    }
-    return initialView;
-  });
+  const [view, setView] = useLocalStorage<CalendarView>("calendar-view", initialView);
 
   const {
     isEventDialogOpen,
@@ -84,25 +73,13 @@ export function EventCalendar({
     view,
   });
 
-  // ビュー変更時にLocalStorageに保存
-  const handleSetView = (newView: CalendarView) => {
-    setView(newView);
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("calendar-view", newView);
-      } catch (error) {
-        console.error("Failed to save view to localStorage:", error);
-      }
-    }
-  };
-
   const viewTitle = getViewTitle(currentDate, view);
 
   useKeyboardShortcuts({
     isEventDialogOpen,
     isChoiceDialogOpen,
     isAISuggestionOpen,
-    setView: handleSetView,
+    setView,
   });
 
 
@@ -119,7 +96,7 @@ export function EventCalendar({
           onPrevious={handlePrevious}
           onNext={handleNext}
           onToday={handleToday}
-          onViewChange={handleSetView}
+          onViewChange={setView}
           onNewEvent={handleNewEventClick}
           className={className}
         />

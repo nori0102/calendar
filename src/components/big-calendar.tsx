@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from "react";
 import { addDays, setHours, setMinutes, getDay } from "date-fns";
-import { useCalendarContext } from "@/components/event-calendar/calendar-context";
+import { useCalendarContext } from "@/contexts/calendar-context";
 import { useHolidays } from "@/hooks/use-holidays";
+import { useLocalStorage } from "@/hooks/use-local-storage";
 
 import {
   EventCalendar,
@@ -75,18 +76,7 @@ const sampleEvents: CalendarEvent[] = [];
  * - カラーの表示/非表示は `useCalendarContext` の状態に依存
  */
 export default function Component() {
-  const [events, setEvents] = useState<CalendarEvent[]>(() => {
-    // LocalStorageからイベントデータを読み込み
-    if (typeof window !== "undefined") {
-      try {
-        const saved = localStorage.getItem("calendar-events");
-        return saved ? JSON.parse(saved) : sampleEvents;
-      } catch {
-        return sampleEvents;
-      }
-    }
-    return sampleEvents;
-  });
+  const [events, setEvents] = useLocalStorage<CalendarEvent[]>("calendar-events", sampleEvents);
   const { isColorVisible } = useCalendarContext();
   const { holidays, loading: holidaysLoading } = useHolidays();
 
@@ -121,36 +111,21 @@ export default function Component() {
   }, [allEvents, isColorVisible]);
 
   /**
-   * LocalStorageにイベントデータを保存
-   */
-  const saveEventsToStorage = (newEvents: CalendarEvent[]) => {
-    if (typeof window !== "undefined") {
-      try {
-        localStorage.setItem("calendar-events", JSON.stringify(newEvents));
-      } catch (error) {
-        console.error("Failed to save events to localStorage:", error);
-      }
-    }
-  };
-
-  /**
    * 新規イベント追加
    */
   const handleEventAdd = (event: CalendarEvent) => {
-    const newEvents = [...events, event];
-    setEvents(newEvents);
-    saveEventsToStorage(newEvents);
+    setEvents(prev => [...prev, event]);
   };
 
   /**
    * イベント更新
    */
   const handleEventUpdate = (updatedEvent: CalendarEvent) => {
-    const newEvents = events.map((event) =>
-      event.id === updatedEvent.id ? updatedEvent : event
+    setEvents(prev => 
+      prev.map((event) =>
+        event.id === updatedEvent.id ? updatedEvent : event
+      )
     );
-    setEvents(newEvents);
-    saveEventsToStorage(newEvents);
   };
 
   /**
@@ -162,9 +137,7 @@ export default function Component() {
       console.warn('祝日は削除できません');
       return;
     }
-    const newEvents = events.filter((event) => event.id !== eventId);
-    setEvents(newEvents);
-    saveEventsToStorage(newEvents);
+    setEvents(prev => prev.filter((event) => event.id !== eventId));
   };
 
   return (

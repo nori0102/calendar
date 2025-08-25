@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useCalendarContext } from "@/components/event-calendar/calendar-context";
+import { useCalendarContext } from "@/contexts/calendar-context";
 import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
 

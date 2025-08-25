@@ -17,15 +17,15 @@ export { EventsPopup } from "./events-popup";
 export { EventCalendar } from "./event-calendar";
 export { MonthView } from "./month-view";
 export { WeekView } from "./week-view";
-export { CalendarDndProvider, useCalendarDnd } from "./calendar-dnd-context";
+export { CalendarDndProvider, useCalendarDnd } from "@/contexts/calendar-dnd-context";
 
 // Constants and utilities
 export * from "./constants";
-export * from "./utils";
+export * from "@/lib/calendar-utils";
 
 // Hooks
-export * from "./hooks/use-current-time-indicator";
-export * from "./hooks/use-event-visibility";
+export * from "@/hooks/calendar/use-current-time-indicator";
+export * from "@/hooks/calendar/use-event-visibility";
 
 // Types
-export type { CalendarEvent, CalendarView, EventColor } from "./types";
+export type { CalendarEvent, CalendarView, EventColor } from "@/types/calendar";

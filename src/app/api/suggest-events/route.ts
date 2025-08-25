@@ -1,4 +1,4 @@
-import { NextApiRequest, NextApiResponse } from 'next';
+import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
 // 環境変数チェック
@@ -141,41 +141,36 @@ function determineCategory(title: string, description: string): SuggestionRespon
   return 'relax';
 }
 
-export default async function handler(
-  req: NextApiRequest,
-  res: NextApiResponse
-) {
-  // HTTPメソッドチェック
-  if (req.method !== 'POST') {
-    return res.status(405).json({ error: 'Method not allowed' });
-  }
-
+export async function POST(request: NextRequest) {
   try {
     // IP取得（プロキシ対応）
-    const ip = (req.headers['x-forwarded-for'] as string)?.split(',')[0] ||
-              req.socket.remoteAddress ||
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0] ||
+              request.headers.get('x-real-ip') ||
               'unknown';
 
     // レート制限チェック
     if (!checkRateLimit(ip)) {
-      return res.status(429).json({
+      return NextResponse.json({
         error: 'Too many requests. Please try again later.'
-      });
+      }, { status: 429 });
     }
+
+    // リクエストボディ取得
+    const body = await request.json();
 
     // 入力値検証（デバッグログ追加）
     if (process.env.NODE_ENV === 'development') {
-      console.log('Received request body:', JSON.stringify(req.body, null, 2));
+      console.log('Received request body:', JSON.stringify(body, null, 2));
     }
 
-    const validatedInput = validateInput(req.body);
+    const validatedInput = validateInput(body);
     if (!validatedInput) {
       if (process.env.NODE_ENV === 'development') {
-        console.error('Validation failed for:', req.body);
+        console.error('Validation failed for:', body);
       }
-      return res.status(400).json({
+      return NextResponse.json({
         error: 'Invalid input parameters'
-      });
+      }, { status: 400 });
     }
 
     const { date, startTime, endTime, location, customLocation } = validatedInput;
@@ -187,9 +182,9 @@ export default async function handler(
 
     // 時間の妥当性チェック
     if (durationMinutes <= 0 || durationMinutes > 12 * 60) { // 12時間以内
-      return res.status(400).json({
+      return NextResponse.json({
         error: 'Invalid time range'
-      });
+      }, { status: 400 });
     }
 
     const hours = Math.floor(durationMinutes / 60);
@@ -301,7 +296,7 @@ export default async function handler(
       });
     }
 
-    return res.status(200).json({
+    return NextResponse.json({
       suggestions: formattedSuggestions,
       metadata: {
         date,
@@ -317,9 +312,9 @@ export default async function handler(
     // 本番環境では詳細なエラー情報を隠蔽
     const isDev = process.env.NODE_ENV === 'development';
 
-    return res.status(500).json({
+    return NextResponse.json({
       error: 'Failed to generate suggestions',
       ...(isDev && { details: error instanceof Error ? error.message : 'Unknown error' })
-    });
+    }, { status: 500 });
   }
 }

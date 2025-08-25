@@ -3,7 +3,7 @@
 import * as React from "react";
 import Link from "next/link";
 import { RiCheckLine } from "@remixicon/react";
-import { useCalendarContext } from "@/components/event-calendar/calendar-context";
+import { useCalendarContext } from "@/contexts/calendar-context";
 import { etiquettes } from "@/components/big-calendar";
 
 import { NavUser } from "@/components/nav-user";
