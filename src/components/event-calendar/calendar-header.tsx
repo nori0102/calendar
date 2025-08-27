@@ -37,6 +37,13 @@ export function CalendarHeader({
 }: CalendarHeaderProps) {
   const { open } = useSidebar();
 
+  const viewLabels = {
+    month: "月",
+    week: "週",
+    day: "日",
+    agenda: "予定"
+  } as const;
+
   return (
     <div
       className={cn(
@@ -102,7 +109,7 @@ export function CalendarHeader({
                 variant="outline"
                 className="gap-1.5 max-sm:h-8 max-sm:px-2! max-sm:gap-1"
               >
-                <span className="capitalize">{view}</span>
+                <span>{viewLabels[view]}</span>
                 <ChevronDownIcon
                   className="-me-1 opacity-60"
                   size={16}
