@@ -4,9 +4,10 @@ import * as React from "react";
 import Link from "next/link";
 import { RiCheckLine } from "@remixicon/react";
 import { useCalendarContext } from "@/contexts/calendar-context";
-import { etiquettes } from "@/components/big-calendar";
 
 import { NavUser } from "@/components/nav-user";
+import { etiquettes } from "@/components/big-calendar";
+
 import {
   Sidebar,
   SidebarContent,
@@ -31,15 +32,16 @@ const data = {
   },
 };
 
+
 /**
  * # AppSidebar
  * カレンダーアプリのサイドバーコンポーネント。
  *
  * - ヘッダー：ロゴ、サイドバートリガー
+ * - フッター：ユーザー情報（`NavUser`）
  * - 本文：
  *   - ミニカレンダー（`SidebarCalendar`）
  *   - カレンダー一覧（`etiquettes` のトグル表示。チェックで色カテゴリの表示/非表示を切替）
- * - フッター：ユーザー情報（`NavUser`）
  *
  * @remarks
  * - 表示/非表示の管理は `useCalendarContext()` の

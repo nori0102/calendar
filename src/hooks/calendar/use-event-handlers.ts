@@ -23,13 +23,11 @@ export function useEventHandlers({
   const [selectedDateTime, setSelectedDateTime] = useState<Date | null>(null);
 
   const handleEventSelect = (event: CalendarEvent) => {
-    console.log("Event selected:", event);
     setSelectedEvent(event);
     setIsEventDialogOpen(true);
   };
 
   const handleEventCreate = (startTime: Date) => {
-    console.log("Creating new event at:", startTime);
     const minutes = startTime.getMinutes();
     const remainder = minutes % 10;
     if (remainder !== 0) {
@@ -60,7 +58,6 @@ export function useEventHandlers({
   };
 
   const handleAICreate = () => {
-    console.log("AI suggestion selected");
     setIsChoiceDialogOpen(false);
     setIsAISuggestionOpen(true);
   };
@@ -124,7 +121,7 @@ export function useEventHandlers({
     } else {
       onEventAdd?.({
         ...event,
-        id: Math.random().toString(36).substring(2, 11),
+        id: crypto.randomUUID(),
       });
       toast(` ${event.title}： 追加`, {
         description: format(new Date(event.start), "yyyy年MM月dd日"),

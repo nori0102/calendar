@@ -30,6 +30,22 @@ interface SuggestionResponse {
   category: 'relax' | 'learning' | 'active' | 'social';
 }
 
+// OpenAI API からの提案データの型定義
+interface RawSuggestion {
+  title?: string;
+  description?: string;
+  location?: string;
+}
+
+// リクエストボディの型定義
+interface RequestBody {
+  date?: unknown;
+  startTime?: unknown;
+  endTime?: unknown;
+  location?: unknown;
+  customLocation?: unknown;
+}
+
 // レート制限用のメモリストア（本番では Redis 推奨）
 const rateLimitStore = new Map<string, number[]>();
 
@@ -60,11 +76,12 @@ function checkRateLimit(ip: string): boolean {
 }
 
 // 入力値検証
-function validateInput(body: any): SuggestionRequest | null {
+function validateInput(body: RequestBody): SuggestionRequest | null {
   const { date, startTime, endTime, location, customLocation } = body;
 
-  // 必須フィールドチェック
-  if (!date || !startTime || !endTime || !location) {
+  // 型チェックと必須フィールドチェック
+  if (typeof date !== 'string' || typeof startTime !== 'string' || 
+      typeof endTime !== 'string' || typeof location !== 'string') {
     return null;
   }
 
@@ -85,7 +102,7 @@ function validateInput(body: any): SuggestionRequest | null {
   }
 
   // カスタム場所の長さチェック
-  if (location === 'custom' && customLocation && customLocation.length > 50) {
+  if (location === 'custom' && typeof customLocation === 'string' && customLocation.length > 50) {
     return null;
   }
 
@@ -94,7 +111,7 @@ function validateInput(body: any): SuggestionRequest | null {
     startTime: startTime.trim(),
     endTime: endTime.trim(),
     location: location.trim(),
-    customLocation: customLocation?.trim().slice(0, 50) // 長さ制限
+    customLocation: typeof customLocation === 'string' ? customLocation.trim().slice(0, 50) : undefined
   };
 }
 
@@ -278,7 +295,7 @@ export async function POST(request: NextRequest) {
     // レスポンス形式に変換（最大3件）
     const formattedSuggestions: SuggestionResponse[] = suggestions
       .slice(0, 3)
-      .map((suggestion: any, index: number) => ({
+      .map((suggestion: RawSuggestion, index: number) => ({
         id: `suggestion-${Date.now()}-${index}`,
         title: (suggestion.title || `提案${index + 1}`).slice(0, 100),
         description: (suggestion.description || '').slice(0, 200),

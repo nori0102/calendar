@@ -393,8 +393,8 @@ export function AISuggestionDialog({
               <SparklesIcon className="w-6 h-6 text-primary dark:text-primary" />
             </div>
             <div>
-              <DialogTitle className="text-xl font-semibold">
-                🤖 AI予定提案
+              <DialogTitle className="text-xl font-bold">
+                AI予定提案
               </DialogTitle>
               <DialogDescription className="text-sm text-muted-foreground mt-1">
                 {formattedDate}の最適な過ごし方を提案します
@@ -455,7 +455,7 @@ export function AISuggestionDialog({
               <div className="space-y-2">
                 <Label className="text-sm font-medium flex items-center gap-2">
                   <MapPinIcon className="w-4 h-4" />
-                  場所の指定 (任意)
+                  場所の指定
                 </Label>
                 <Select value={location} onValueChange={setLocation}>
                   <SelectTrigger>

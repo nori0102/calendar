@@ -1,9 +1,9 @@
 import { format, startOfWeek, endOfWeek, isSameMonth, addDays } from "date-fns";
 import { ja } from "date-fns/locale";
 import { CalendarView, AgendaDaysToShow } from "@/components/event-calendar";
-import React from "react";
+import { Fragment, createElement, ReactNode } from "react";
 
-export function getViewTitle(currentDate: Date, view: CalendarView): React.ReactNode {
+export function getViewTitle(currentDate: Date, view: CalendarView): ReactNode {
   if (view === "month") {
     return format(currentDate, "yyyy年M月", { locale: ja });
   }
@@ -21,11 +21,11 @@ export function getViewTitle(currentDate: Date, view: CalendarView): React.React
   }
 
   if (view === "day") {
-    return React.createElement(React.Fragment, null,
-      React.createElement("span", { className: "min-md:hidden" },
+    return createElement(Fragment, null,
+      createElement("span", { className: "min-md:hidden" },
         format(currentDate, "M月d日 (E)", { locale: ja })
       ),
-      React.createElement("span", { className: "max-md:hidden" },
+      createElement("span", { className: "max-md:hidden" },
         format(currentDate, "yyyy年M月d日 (EEEE)", { locale: ja })
       )
     );

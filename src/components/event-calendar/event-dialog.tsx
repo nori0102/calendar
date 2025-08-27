@@ -102,10 +102,6 @@ export function EventDialog({
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
 
-  // Debug: 受け取った event を確認
-  useEffect(() => {
-    console.log("EventDialog received event:", event);
-  }, [event]);
 
   // モード切替（編集/新規）に応じてフォーム初期化
   useEffect(() => {
@@ -330,7 +326,7 @@ export function EventDialog({
                         !startDate && "text-muted-foreground"
                       )}
                     >
-                      {startDate ? format(startDate, "PPP") : "日付を選択"}
+                      {startDate ? format(startDate, "yyyy年 M月d日") : "日付を選択"}
                     </span>
                     <RiCalendarLine
                       size={16}
@@ -399,7 +395,7 @@ export function EventDialog({
                         !endDate && "text-muted-foreground"
                       )}
                     >
-                      {endDate ? format(endDate, "PPP") : "日付を選択"}
+                      {endDate ? format(endDate, "yyyy年 M月d日") : "日付を選択"}
                     </span>
                     <RiCalendarLine
                       size={16}
@@ -468,7 +464,7 @@ export function EventDialog({
           {/* Color/Etiquette */}
           <fieldset className="space-y-4">
             <legend className="text-foreground text-sm leading-none font-medium">
-              Etiquette
+              色
             </legend>
             <RadioGroup
               className="flex gap-1.5"

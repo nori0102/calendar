@@ -1,7 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { addDays, setHours, setMinutes, getDay } from "date-fns";
+import { useMemo } from "react";
 import { useCalendarContext } from "@/contexts/calendar-context";
 import { useHolidays } from "@/hooks/use-holidays";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -28,7 +27,7 @@ export const etiquettes = [
   },
   {
     id: "marketing-team",
-    name: "マーケティングチーム",
+    name: "マーケティング",
     color: "orange" as EventColor,
     isActive: true,
   },
@@ -52,21 +51,6 @@ export const etiquettes = [
   },
 ];
 
-/**
- * 次の日曜日までの日数を返す関数
- * @param date - 基準日
- * @returns 0（日曜）〜6（土曜）までの残り日数
- */
-const getDaysUntilNextSunday = (date: Date) => {
-  const day = getDay(date); // 0 is Sunday, 6 is Saturday
-  return day === 0 ? 0 : 7 - day; // If today is Sunday, return 0, otherwise calculate days until Sunday
-};
-
-// ===== 現在日付と、そこから計算した日曜までの差を事前計算 =====
-const currentDate = new Date();
-
-// Calculate the offset once to avoid repeated calculations
-const daysUntilNextSunday = getDaysUntilNextSunday(currentDate);
 
 const sampleEvents: CalendarEvent[] = [];
 
@@ -78,7 +62,7 @@ const sampleEvents: CalendarEvent[] = [];
 export default function Component() {
   const [events, setEvents] = useLocalStorage<CalendarEvent[]>("calendar-events", sampleEvents);
   const { isColorVisible } = useCalendarContext();
-  const { holidays, loading: holidaysLoading } = useHolidays();
+  const { holidays } = useHolidays();
 
   /**
    * 祝日をCalendarEventに変換
@@ -121,7 +105,7 @@ export default function Component() {
    * イベント更新
    */
   const handleEventUpdate = (updatedEvent: CalendarEvent) => {
-    setEvents(prev => 
+    setEvents(prev =>
       prev.map((event) =>
         event.id === updatedEvent.id ? updatedEvent : event
       )
