@@ -257,7 +257,7 @@ export function WeekView({
         {days.map((day) => (
           <div
             key={day.toString()}
-            className="data-today:text-foreground text-muted-foreground/70 py-2 text-center text-xs data-today:font-medium"
+            className="data-today:text-primary text-muted-foreground/70 py-2 text-center text-xs data-today:font-medium"
             data-today={isToday(day) || undefined}
           >
             <span className="sm:hidden" aria-hidden="true">
