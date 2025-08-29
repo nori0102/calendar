@@ -154,8 +154,9 @@ export function useEventHandlers({
   };
 
   const handleNewEventClick = () => {
-    setSelectedEvent(null);
-    setIsEventDialogOpen(true);
+    const now = new Date();
+    setSelectedDateTime(now);
+    setIsChoiceDialogOpen(true);
   };
 
   return {

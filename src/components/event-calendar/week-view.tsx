@@ -37,7 +37,7 @@ import { cn } from "@/lib/utils";
  * @property currentDate - 表示基準日（この日を含む週を描画）
  * @property events - すべてのイベント配列（本コンポーネントで週/日別にフィルタ）
  * @property onEventSelect - イベントクリック時のハンドラ
- * @property onEventCreate - グリッドクリック（5分刻み）で新規作成する開始時刻を通知
+ * @property onEventCreate - グリッドクリック（10分刻み）で新規作成する開始時刻を通知
  */
 interface WeekViewProps {
   currentDate: Date;
@@ -66,7 +66,7 @@ interface PositionedEvent {
  * カレンダーの**週表示**コンポーネント。
  *
  * - 上段：終日/マルチデイイベントの行（タイトルはスパンの初日 or 週の最初の可視日で表示）
- * - 下段：時間グリッド（`StartHour`〜`EndHour`、5分刻みの Droppable）
+ * - 下段：時間グリッド（`StartHour`〜`EndHour`、10分刻みの Droppable）
  * - イベントの**重なり解消**は「列割り当て」方式：重なるイベントは別列に配置し、幅/left を調整
  * - 現在時刻インジケーターをその日の列に描画（`useCurrentTimeIndicator`）
  *
@@ -398,7 +398,7 @@ export function WeekView({
               </div>
             )}
 
-            {/* 5分刻みの Droppable セル */}
+            {/* 10分刻みの Droppable セル */}
             {hours.map((hour) => {
               const hourValue = getHours(hour);
               return (
@@ -406,33 +406,27 @@ export function WeekView({
                   key={hour.toString()}
                   className="border-border/70 relative min-h-[var(--week-cells-height)] border-b last:border-b-0"
                 >
-                  {[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11].map((fiveMinInterval) => {
-                    const fiveMinTime = hourValue + fiveMinInterval * (5/60);
+                  {[0, 1, 2, 3, 4, 5].map((tenMinInterval) => {
+                    const tenMinTime = hourValue + tenMinInterval * (10/60);
                     return (
                       <DroppableCell
-                        key={`${hour.toString()}-${fiveMinInterval}`}
-                        id={`week-cell-${day.toISOString()}-${fiveMinTime}`}
+                        key={`${hour.toString()}-${tenMinInterval}`}
+                        id={`week-cell-${day.toISOString()}-${tenMinTime}`}
                         date={day}
-                        time={fiveMinTime}
+                        time={tenMinTime}
                         className={cn(
-                          "absolute h-[calc(var(--week-cells-height)/12)] w-full",
-                          fiveMinInterval === 0 && "top-0",
-                          fiveMinInterval === 1 && "top-[calc(var(--week-cells-height)/12)]",
-                          fiveMinInterval === 2 && "top-[calc(var(--week-cells-height)/12*2)]",
-                          fiveMinInterval === 3 && "top-[calc(var(--week-cells-height)/12*3)]",
-                          fiveMinInterval === 4 && "top-[calc(var(--week-cells-height)/12*4)]",
-                          fiveMinInterval === 5 && "top-[calc(var(--week-cells-height)/12*5)]",
-                          fiveMinInterval === 6 && "top-[calc(var(--week-cells-height)/12*6)]",
-                          fiveMinInterval === 7 && "top-[calc(var(--week-cells-height)/12*7)]",
-                          fiveMinInterval === 8 && "top-[calc(var(--week-cells-height)/12*8)]",
-                          fiveMinInterval === 9 && "top-[calc(var(--week-cells-height)/12*9)]",
-                          fiveMinInterval === 10 && "top-[calc(var(--week-cells-height)/12*10)]",
-                          fiveMinInterval === 11 && "top-[calc(var(--week-cells-height)/12*11)]"
+                          "absolute h-[calc(var(--week-cells-height)/6)] w-full",
+                          tenMinInterval === 0 && "top-0",
+                          tenMinInterval === 1 && "top-[calc(var(--week-cells-height)/6)]",
+                          tenMinInterval === 2 && "top-[calc(var(--week-cells-height)/6*2)]",
+                          tenMinInterval === 3 && "top-[calc(var(--week-cells-height)/6*3)]",
+                          tenMinInterval === 4 && "top-[calc(var(--week-cells-height)/6*4)]",
+                          tenMinInterval === 5 && "top-[calc(var(--week-cells-height)/6*5)]"
                         )}
                         onClick={() => {
                           const startTime = new Date(day);
                           startTime.setHours(hourValue);
-                          startTime.setMinutes(fiveMinInterval * 5);
+                          startTime.setMinutes(tenMinInterval * 10);
                           onEventCreate(startTime);
                         }}
                       />

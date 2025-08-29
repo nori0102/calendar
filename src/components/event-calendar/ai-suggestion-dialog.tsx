@@ -203,14 +203,25 @@ export function AISuggestionDialog({
   onManualCreate,
 }: AISuggestionDialogProps) {
   /** 開始時刻の状態管理（HH:MM形式） */
-  const [startTime, setStartTime] = useState(() =>
-    selectedTime ? format(selectedTime, "HH:mm") : "14:00"
-  );
+  const [startTime, setStartTime] = useState(() => {
+    if (selectedTime) {
+      // 10分刻みに正規化
+      const normalizedTime = new Date(selectedTime);
+      const minutes = Math.floor(normalizedTime.getMinutes() / 10) * 10;
+      normalizedTime.setMinutes(minutes);
+      return format(normalizedTime, "HH:mm");
+    }
+    return "14:00";
+  });
 
   /** 終了時刻の状態管理（HH:MM形式） */
   const [endTime, setEndTime] = useState(() => {
     if (selectedTime) {
-      const endDateTime = addHoursToDate(selectedTime, 1);
+      // 10分刻みに正規化した開始時刻から1時間後
+      const normalizedTime = new Date(selectedTime);
+      const minutes = Math.floor(normalizedTime.getMinutes() / 10) * 10;
+      normalizedTime.setMinutes(minutes);
+      const endDateTime = addHoursToDate(normalizedTime, 1);
       return format(endDateTime, "HH:mm");
     }
     return "15:00";

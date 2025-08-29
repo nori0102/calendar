@@ -116,7 +116,7 @@ interface CalendarDndProviderProps {
  *   ```
  *
  * ### 動作仕様
- * - week/day ビューでは **5 分刻み** にスナップ（0/5/10/15/20/25/30/35/40/45/50/55）。
+ * - week/day ビューでは **10 分刻み** にスナップ（0/10/20/30/40/50）。
  * - month ビューでは **日付のみ** 移動し、時刻は元イベント（ドラッグ中に保持している `currentTime`）を継承。
  * - ドロップ時は **元イベントの duration** を維持して `end` を再計算します。
  * - `MouseSensor` / `PointerSensor` は 5px、`TouchSensor` は 250ms（5px 許容）の活性化制約を使用。
@@ -217,7 +217,7 @@ export function CalendarDndProvider({
 
   /**
    * ドラッグ中ハンドラ。
-   * - week/day：`over.data.current.time` を 5 分刻みにスナップして `currentTime` を更新
+   * - week/day：`over.data.current.time` を 10 分刻みにスナップして `currentTime` を更新
    * - month：日付のみ更新、時刻は維持
    */
   const handleDragOver = (event: DragOverEvent) => {
@@ -232,20 +232,15 @@ export function CalendarDndProvider({
         const hours = Math.floor(time);
         const fractionalHour = time - hours;
 
-        // 5 分スナップ
+        // 10 分スナップ
         let minutes = 0;
-        if (fractionalHour < 0.0417) minutes = 0;        // 0-2.5 min
-        else if (fractionalHour < 0.125) minutes = 5;   // 2.5-7.5 min
-        else if (fractionalHour < 0.2083) minutes = 10; // 7.5-12.5 min
-        else if (fractionalHour < 0.2917) minutes = 15; // 12.5-17.5 min
-        else if (fractionalHour < 0.375) minutes = 20;  // 17.5-22.5 min
-        else if (fractionalHour < 0.4583) minutes = 25; // 22.5-27.5 min
-        else if (fractionalHour < 0.5417) minutes = 30; // 27.5-32.5 min
-        else if (fractionalHour < 0.625) minutes = 35;  // 32.5-37.5 min
-        else if (fractionalHour < 0.7083) minutes = 40; // 37.5-42.5 min
-        else if (fractionalHour < 0.7917) minutes = 45; // 42.5-47.5 min
-        else if (fractionalHour < 0.875) minutes = 50;  // 47.5-52.5 min
-        else minutes = 55;                              // 52.5-57.5 min
+        if (fractionalHour < 0.0833) minutes = 0;       // 0-5 min
+        else if (fractionalHour < 0.25) minutes = 10;   // 5-15 min
+        else if (fractionalHour < 0.4167) minutes = 20; // 15-25 min
+        else if (fractionalHour < 0.5833) minutes = 30; // 25-35 min
+        else if (fractionalHour < 0.75) minutes = 40;   // 35-45 min
+        else if (fractionalHour < 0.9167) minutes = 50; // 45-55 min
+        else minutes = 0;                               // 55-60 min (次の時間の0分)
 
         newTime.setHours(hours, minutes, 0, 0);
 
@@ -337,18 +332,13 @@ export function CalendarDndProvider({
         const hours = Math.floor(time);
         const fractionalHour = time - hours;
         let minutes = 0;
-        if (fractionalHour < 0.0417) minutes = 0;        // 0-2.5 min
-        else if (fractionalHour < 0.125) minutes = 5;   // 2.5-7.5 min
-        else if (fractionalHour < 0.2083) minutes = 10; // 7.5-12.5 min
-        else if (fractionalHour < 0.2917) minutes = 15; // 12.5-17.5 min
-        else if (fractionalHour < 0.375) minutes = 20;  // 17.5-22.5 min
-        else if (fractionalHour < 0.4583) minutes = 25; // 22.5-27.5 min
-        else if (fractionalHour < 0.5417) minutes = 30; // 27.5-32.5 min
-        else if (fractionalHour < 0.625) minutes = 35;  // 32.5-37.5 min
-        else if (fractionalHour < 0.7083) minutes = 40; // 37.5-42.5 min
-        else if (fractionalHour < 0.7917) minutes = 45; // 42.5-47.5 min
-        else if (fractionalHour < 0.875) minutes = 50;  // 47.5-52.5 min
-        else minutes = 55;                              // 52.5-57.5 min
+        if (fractionalHour < 0.0833) minutes = 0;       // 0-5 min
+        else if (fractionalHour < 0.25) minutes = 10;   // 5-15 min
+        else if (fractionalHour < 0.4167) minutes = 20; // 15-25 min
+        else if (fractionalHour < 0.5833) minutes = 30; // 25-35 min
+        else if (fractionalHour < 0.75) minutes = 40;   // 35-45 min
+        else if (fractionalHour < 0.9167) minutes = 50; // 45-55 min
+        else minutes = 0;                               // 55-60 min (次の時間の0分)
         newStart.setHours(hours, minutes, 0, 0);
       } else {
         // month：currentTime の時刻を維持
