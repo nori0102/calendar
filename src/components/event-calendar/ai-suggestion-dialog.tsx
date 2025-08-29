@@ -426,7 +426,7 @@ export function AISuggestionDialog({
                 </Label>
                 <div className="flex items-center gap-2 text-sm">
                   <Select value={startTime} onValueChange={setStartTime}>
-                    <SelectTrigger className="w-20 h-8">
+                    <SelectTrigger className="w-24 h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -442,7 +442,7 @@ export function AISuggestionDialog({
                   </Select>
                   <span className="text-muted-foreground">〜</span>
                   <Select value={endTime} onValueChange={setEndTime}>
-                    <SelectTrigger className="w-20 h-8">
+                    <SelectTrigger className="w-24 h-8">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
@@ -520,7 +520,7 @@ export function AISuggestionDialog({
           {suggestions.length > 0 && (
             <div className="space-y-4">
               <h3 className="font-medium text-foreground flex items-center gap-2">
-                📋 あなたにおすすめの予定
+                  あなたにおすすめの予定
                 <Badge variant="secondary" className="text-xs">
                   {suggestions.length}件の提案
                 </Badge>

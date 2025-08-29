@@ -1,23 +1,28 @@
+/** イベントの高さ (px) */
 export const EventHeight = 24;
 
-// Vertical gap between events in pixels - controls spacing in month view
+/** イベント間の縦方向のギャップ (px) - 月表示での間隔を制御 */
 export const EventGap = 4;
 
-// Height of hour cells in week and day views - controls the scale of time display
+/** 週・日表示での時間セルの高さ (px) - 時間表示のスケールを制御 */
 export const WeekCellsHeight = 72;
 
-// Number of days to show in the agenda view
+/** アジェンダビューで表示する日数 */
 export const AgendaDaysToShow = 30;
 
-// Start and end hours for the week and day views
-export const StartHour = 0; // 0時開始
-export const EndHour = 24; // 24時終了
+/** 週・日表示の開始時間 (0時開始) */
+export const StartHour = 0;
 
-// デフォルトの開始・終了時刻
-export const DefaultStartHour = 9; // 9時
-export const DefaultEndHour = 10; // 10時
+/** 週・日表示の終了時間 (24時終了) */
+export const EndHour = 24;
 
-// CSS variables for calendar styling
+/** デフォルトの開始時間 (9時) */
+export const DefaultStartHour = 9;
+
+/** デフォルトの終了時間 (10時) */
+export const DefaultEndHour = 10;
+
+/** カレンダーのスタイリング用CSS変数 */
 export const CALENDAR_CSS_VARIABLES = {
   "--event-height": `${EventHeight}px`,
   "--event-gap": `${EventGap}px`,
