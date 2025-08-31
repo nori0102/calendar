@@ -517,12 +517,14 @@ export function EventDialog({
                 <AlertDialogHeader>
                   <AlertDialogTitle>イベントを削除しますか？</AlertDialogTitle>
                   <AlertDialogDescription>
-                    イベント「{event?.title}」を完全に削除します。
+                    この操作は取り消すことができません。イベント「{event?.title}」を完全に削除します。
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                  <AlertDialogAction onClick={handleConfirmDelete}>
+                  <AlertDialogAction
+                    onClick={handleConfirmDelete}
+                  >
                     削除
                   </AlertDialogAction>
                 </AlertDialogFooter>
