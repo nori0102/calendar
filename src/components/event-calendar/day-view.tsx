@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   addHours,
   areIntervalsOverlapping,
@@ -81,6 +81,12 @@ export function DayView({
   onEventSelect,
   onEventCreate,
 }: DayViewProps) {
+  // Hydrationエラーを避けるため、イベントのレンダリングをクライアントサイドでのみ行う
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   // 表示する時間帯（StartHour〜EndHour-1 を1時間刻みで配列化）
   const hours = useMemo(() => {
     const dayStart = startOfDay(currentDate);
@@ -275,7 +281,7 @@ export function DayView({
         {/* イベントとドロップ領域 */}
         <div className="relative">
           {/* 配置済みイベント */}
-          {positionedEvents.map((positionedEvent) => (
+          {isClient && positionedEvents.map((positionedEvent) => (
             <div
               key={positionedEvent.event.id}
               className="absolute z-10 px-0.5"

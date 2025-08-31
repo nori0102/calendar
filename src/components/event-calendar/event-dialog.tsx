@@ -17,6 +17,17 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -220,8 +231,8 @@ export function EventDialog({
     });
   };
 
-  /** 既存イベントの削除 */
-  const handleDelete = () => {
+  /** 削除確認後の実際の削除処理 */
+  const handleConfirmDelete = () => {
     if (event?.id) {
       onDelete(event.id);
     }
@@ -492,15 +503,35 @@ export function EventDialog({
         {/* Footer */}
         <DialogFooter className="flex-row sm:justify-between">
           {event?.id && (
-            <Button
-              variant="outline"
-              className="text-destructive hover:text-destructive"
-              size="icon"
-              onClick={handleDelete}
-              aria-label="イベントを削除"
-            >
-              <RiDeleteBinLine size={16} aria-hidden="true" />
-            </Button>
+            <AlertDialog>
+              <AlertDialogTrigger asChild>
+                <Button
+                  variant="outline"
+                  className="text-destructive hover:text-destructive"
+                  size="icon"
+                  aria-label="イベントを削除"
+                >
+                  <RiDeleteBinLine size={16} aria-hidden="true" />
+                </Button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>イベントを削除しますか？</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    この操作は取り消すことができません。イベント「{event?.title}」を完全に削除します。
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>キャンセル</AlertDialogCancel>
+                  <AlertDialogAction
+                    onClick={handleConfirmDelete}
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                  >
+                    削除
+                  </AlertDialogAction>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
           )}
           <div className="flex flex-1 justify-end gap-2">
             <Button variant="outline" onClick={onClose}>

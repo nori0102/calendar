@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useEffect, useState } from "react";
 import {
   addHours,
   areIntervalsOverlapping,
@@ -80,6 +80,12 @@ export function WeekView({
   onEventSelect,
   onEventCreate,
 }: WeekViewProps) {
+  // Hydrationエラーを避けるため、イベントのレンダリングをクライアントサイドでのみ行う
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
   /** 週に含まれる各日（Sun〜Sat） */
   const days = useMemo(() => {
     const weekStart = startOfWeek(currentDate, { weekStartsOn: 0 });
@@ -360,7 +366,7 @@ export function WeekView({
             data-today={isToday(day) || undefined}
           >
             {/* 配置済みイベント（ドラッグ可） */}
-            {(processedDayEvents[dayIndex] ?? []).map((positionedEvent) => (
+            {isClient && (processedDayEvents[dayIndex] ?? []).map((positionedEvent) => (
               <div
                 key={positionedEvent.event.id}
                 className="absolute z-10 px-0.5"

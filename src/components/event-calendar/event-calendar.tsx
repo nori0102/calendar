@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useCalendarContext } from "@/contexts/calendar-context";
 import { CalendarDndProvider, CalendarView } from "@/components/event-calendar";
 import { CalendarHeader } from "@/components/event-calendar/calendar-header";
@@ -10,6 +10,8 @@ import { useEventHandlers } from "@/hooks/calendar/use-event-handlers";
 import { useNavigation } from "@/hooks/calendar/use-navigation";
 import { useKeyboardShortcuts } from "@/hooks/calendar/use-keyboard-shortcuts";
 import { getViewTitle } from "@/components/event-calendar/utils/view-title";
+import { format } from "date-fns";
+import { ja } from "date-fns/locale";
 import { CALENDAR_CSS_VARIABLES } from "@/components/event-calendar/constants";
 import { EventCalendarProps } from "@/types/calendar";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -43,7 +45,35 @@ export function EventCalendar({
   initialView = "month",
 }: EventCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarContext();
-  const [view, setView] = useLocalStorage<CalendarView>("calendar-view", initialView);
+  // Hydrationエラーを避けるため、初期値を使用してからLocalStorageから読み込み
+  const [view, setView] = useState<CalendarView>(initialView);
+  const [isViewLoaded, setIsViewLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedView = localStorage.getItem('calendar-view');
+        if (savedView) {
+          setView(JSON.parse(savedView) as CalendarView);
+        }
+      } catch (error) {
+        console.warn('Error reading calendar-view from localStorage:', error);
+      } finally {
+        setIsViewLoaded(true);
+      }
+    }
+  }, []);
+
+  // viewが変更されたときにLocalStorageに保存
+  useEffect(() => {
+    if (isViewLoaded && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('calendar-view', JSON.stringify(view));
+      } catch (error) {
+        console.warn('Error saving calendar-view to localStorage:', error);
+      }
+    }
+  }, [view, isViewLoaded]);
 
   const {
     isEventDialogOpen,
@@ -73,7 +103,14 @@ export function EventCalendar({
     view,
   });
 
-  const viewTitle = getViewTitle(currentDate, view);
+  // Hydrationエラーを避けるため、viewTitleはクライアントサイドでのみ計算
+  const [viewTitle, setViewTitle] = useState<React.ReactNode>(
+    format(currentDate, "yyyy年M月", { locale: ja })
+  );
+
+  useEffect(() => {
+    setViewTitle(getViewTitle(currentDate, view));
+  }, [currentDate, view]);
 
   useKeyboardShortcuts({
     isEventDialogOpen,

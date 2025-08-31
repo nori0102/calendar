@@ -16,10 +16,10 @@ export const StartHour = 0;
 /** 週・日表示の終了時間 (24時終了) */
 export const EndHour = 24;
 
-/** デフォルトの開始時間 (9時) */
+/** デフォルトの開始時間 月表示時(9時) */
 export const DefaultStartHour = 9;
 
-/** デフォルトの終了時間 (10時) */
+/** デフォルトの終了時間 月表示時(10時) */
 export const DefaultEndHour = 10;
 
 /** カレンダーのスタイリング用CSS変数 */
