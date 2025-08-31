@@ -45,35 +45,7 @@ export function EventCalendar({
   initialView = "month",
 }: EventCalendarProps) {
   const { currentDate, setCurrentDate } = useCalendarContext();
-  // Hydrationエラーを避けるため、初期値を使用してからLocalStorageから読み込み
   const [view, setView] = useState<CalendarView>(initialView);
-  const [isViewLoaded, setIsViewLoaded] = useState(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      try {
-        const savedView = localStorage.getItem('calendar-view');
-        if (savedView) {
-          setView(JSON.parse(savedView) as CalendarView);
-        }
-      } catch (error) {
-        console.warn('Error reading calendar-view from localStorage:', error);
-      } finally {
-        setIsViewLoaded(true);
-      }
-    }
-  }, []);
-
-  // viewが変更されたときにLocalStorageに保存
-  useEffect(() => {
-    if (isViewLoaded && typeof window !== 'undefined') {
-      try {
-        localStorage.setItem('calendar-view', JSON.stringify(view));
-      } catch (error) {
-        console.warn('Error saving calendar-view to localStorage:', error);
-      }
-    }
-  }, [view, isViewLoaded]);
 
   const {
     isEventDialogOpen,

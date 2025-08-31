@@ -2,7 +2,6 @@
 
 import React, { createContext, useContext, useState, ReactNode } from "react";
 import { etiquettes } from "@/components/big-calendar";
-import { useLocalStorage } from "@/hooks/use-local-storage";
 
 interface CalendarContextType {
   /**  表示中の日付 */
@@ -36,11 +35,7 @@ export function useCalendarContext() {
  * 日付や色ラベル（タグ）の可視状態などの共有状態を管理する
  */
 export function CalendarProvider({ children }: { children: ReactNode }) {
-  const [currentDateRaw, setCurrentDateRaw] = useLocalStorage<Date>("calendar-current-date", new Date());
-  
-  // Ensure currentDate is always a Date object (localStorage returns string after JSON parse)
-  const currentDate = currentDateRaw instanceof Date ? currentDateRaw : new Date(currentDateRaw);
-  const setCurrentDate = (date: Date) => setCurrentDateRaw(date);
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
 
   // 初期状態では、etiquetteのisActiveがtrueのもののcolorをvisibleColorsに設定
   // これにより、初期表示ではアクティブな色ラベルのみが表示される

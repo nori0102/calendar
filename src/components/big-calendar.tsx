@@ -43,12 +43,6 @@ export const etiquettes = [
     color: "blue" as EventColor,
     isActive: true,
   },
-  {
-    id: "japanese-holidays",
-    name: "日本の祝日",
-    color: "rose" as EventColor,
-    isActive: true,
-  },
 ];
 
 
@@ -89,9 +83,16 @@ export default function Component() {
 
   /**
    * 現在表示すべきイベント（色フィルタ適用後）
+   * 祝日は常に表示する
    */
   const visibleEvents = useMemo(() => {
-    return allEvents.filter((event) => isColorVisible(event.color));
+    return allEvents.filter((event) => {
+      // 祝日は常に表示
+      if (event.id.startsWith('holiday-')) {
+        return true;
+      }
+      return isColorVisible(event.color);
+    });
   }, [allEvents, isColorVisible]);
 
   /**

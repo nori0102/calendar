@@ -113,7 +113,6 @@ export function EventDialog({
   const [startDateOpen, setStartDateOpen] = useState(false);
   const [endDateOpen, setEndDateOpen] = useState(false);
 
-
   // モード切替（編集/新規）に応じてフォーム初期化
   useEffect(() => {
     if (event) {
@@ -258,12 +257,6 @@ export function EventDialog({
       borderClass: "border-violet-400 data-[state=checked]:border-violet-400",
     },
     {
-      value: "rose",
-      label: "Rose",
-      bgClass: "bg-rose-400 data-[state=checked]:bg-rose-400",
-      borderClass: "border-rose-400 data-[state=checked]:border-rose-400",
-    },
-    {
       value: "emerald",
       label: "Emerald",
       bgClass: "bg-emerald-400 data-[state=checked]:bg-emerald-400",
@@ -281,7 +274,9 @@ export function EventDialog({
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>{event?.id ? "イベント編集" : "イベント作成"}</DialogTitle>
+          <DialogTitle>
+            {event?.id ? "イベント編集" : "イベント作成"}
+          </DialogTitle>
           <DialogDescription className="sr-only">
             {event?.id
               ? "このイベントの詳細を編集"
@@ -337,7 +332,9 @@ export function EventDialog({
                         !startDate && "text-muted-foreground"
                       )}
                     >
-                      {startDate ? format(startDate, "yyyy年 M月d日") : "日付を選択"}
+                      {startDate
+                        ? format(startDate, "yyyy年 M月d日")
+                        : "日付を選択"}
                     </span>
                     <RiCalendarLine
                       size={16}
@@ -406,7 +403,9 @@ export function EventDialog({
                         !endDate && "text-muted-foreground"
                       )}
                     >
-                      {endDate ? format(endDate, "yyyy年 M月d日") : "日付を選択"}
+                      {endDate
+                        ? format(endDate, "yyyy年 M月d日")
+                        : "日付を選択"}
                     </span>
                     <RiCalendarLine
                       size={16}
@@ -507,7 +506,7 @@ export function EventDialog({
               <AlertDialogTrigger asChild>
                 <Button
                   variant="outline"
-                  className="text-destructive hover:text-destructive"
+                  className="text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200 hover:border-red-300"
                   size="icon"
                   aria-label="イベントを削除"
                 >
@@ -518,15 +517,12 @@ export function EventDialog({
                 <AlertDialogHeader>
                   <AlertDialogTitle>イベントを削除しますか？</AlertDialogTitle>
                   <AlertDialogDescription>
-                    この操作は取り消すことができません。イベント「{event?.title}」を完全に削除します。
+                    イベント「{event?.title}」を完全に削除します。
                   </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>
                   <AlertDialogCancel>キャンセル</AlertDialogCancel>
-                  <AlertDialogAction
-                    onClick={handleConfirmDelete}
-                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                  >
+                  <AlertDialogAction onClick={handleConfirmDelete}>
                     削除
                   </AlertDialogAction>
                 </AlertDialogFooter>
