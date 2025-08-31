@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 import { etiquettes } from "@/components/big-calendar";
 import { useLocalStorage } from "@/hooks/use-local-storage";
 
@@ -36,11 +36,36 @@ export function useCalendarContext() {
  * 日付や色ラベル（タグ）の可視状態などの共有状態を管理する
  */
 export function CalendarProvider({ children }: { children: ReactNode }) {
-  const [currentDateRaw, setCurrentDateRaw] = useLocalStorage<Date>("calendar-current-date", new Date());
-  
-  // Ensure currentDate is always a Date object (localStorage returns string after JSON parse)
-  const currentDate = currentDateRaw instanceof Date ? currentDateRaw : new Date(currentDateRaw);
-  const setCurrentDate = (date: Date) => setCurrentDateRaw(date);
+  // Hydrationエラーを避けるため、初期値を使用してからLocalStorageから読み込み
+  const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [isDateLoaded, setIsDateLoaded] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      try {
+        const savedDate = localStorage.getItem('calendar-current-date');
+        if (savedDate) {
+          const parsedDate = JSON.parse(savedDate);
+          setCurrentDate(parsedDate instanceof Date ? parsedDate : new Date(parsedDate));
+        }
+      } catch (error) {
+        console.warn('Error reading calendar-current-date from localStorage:', error);
+      } finally {
+        setIsDateLoaded(true);
+      }
+    }
+  }, []);
+
+  // currentDateが変更されたときにLocalStorageに保存
+  useEffect(() => {
+    if (isDateLoaded && typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('calendar-current-date', JSON.stringify(currentDate));
+      } catch (error) {
+        console.warn('Error saving calendar-current-date to localStorage:', error);
+      }
+    }
+  }, [currentDate, isDateLoaded]);
 
   // 初期状態では、etiquetteのisActiveがtrueのもののcolorをvisibleColorsに設定
   // これにより、初期表示ではアクティブな色ラベルのみが表示される
