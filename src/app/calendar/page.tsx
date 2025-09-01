@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Experiment 06 - Crafted.is",
+  title: "Yotei - カレンダー",
 };
 
 import { AppSidebar } from "@/components/app-sidebar";
