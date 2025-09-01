@@ -1,8 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { RiCheckLine } from "@remixicon/react";
+import { RiCheckLine, RiPencilLine } from "@remixicon/react";
 import { useCalendarContext } from "@/contexts/calendar-context";
 
 import { NavUser } from "@/components/nav-user";
@@ -32,7 +33,6 @@ const data = {
   },
 };
 
-
 /**
  * # AppSidebar
  * カレンダーアプリのサイドバーコンポーネント。
@@ -52,6 +52,61 @@ const data = {
  */
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isColorVisible, toggleColorVisibility } = useCalendarContext();
+
+  // 編集可能なetiquette名を管理
+  const [editableEtiquettes, setEditableEtiquettes] = useState(etiquettes);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState("");
+
+  // LocalStorageから読み込み
+  useEffect(() => {
+    const saved = localStorage.getItem("editableEtiquettes");
+    if (saved) {
+      setEditableEtiquettes(JSON.parse(saved));
+    }
+  }, []);
+
+  // LocalStorageに保存
+  useEffect(() => {
+    localStorage.setItem(
+      "editableEtiquettes",
+      JSON.stringify(editableEtiquettes)
+    );
+  }, [editableEtiquettes]);
+
+  // 編集開始
+  const startEdit = (item: (typeof etiquettes)[0]) => {
+    setEditingId(item.id);
+    setEditingName(item.name);
+  };
+
+  // 編集保存
+  const saveEdit = () => {
+    if (editingId && editingName.trim()) {
+      setEditableEtiquettes((prev) =>
+        prev.map((item) =>
+          item.id === editingId ? { ...item, name: editingName.trim() } : item
+        )
+      );
+    }
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  // 編集キャンセル
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditingName("");
+  };
+
+  // キー操作
+  const handleKeyPress = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter") {
+      saveEdit();
+    } else if (e.key === "Escape") {
+      cancelEdit();
+    }
+  };
 
   return (
     <Sidebar variant="inset" {...props} className="max-lg:p-3 lg:pe-1">
@@ -95,61 +150,96 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {etiquettes.map((item) => (
-                <SidebarMenuItem key={item.id}>
-                  <SidebarMenuButton
-                    asChild
-                    className="relative rounded-md [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px]"
-                  >
-                    {/* ボタン内：チェックボックス + ラベル + 色ドット */}
-                    <span>
-                      <span className="font-medium flex items-center justify-between gap-3">
-                        {/* 視覚的にはアイコンでオン/オフ表示。入力は非表示の Checkbox が持つ */}
-                        <Checkbox
-                          id={item.id}
-                          className="sr-only peer"
-                          checked={isColorVisible(item.color)}
-                          onCheckedChange={() =>
-                            toggleColorVisibility(item.color)
-                          }
-                        />
-                        {/* チェック状態のときだけ表示するチェックアイコン */}
-                        <RiCheckLine
-                          className="peer-not-data-[state=checked]:invisible"
-                          size={16}
-                          aria-hidden="true"
-                        />
-                        {/* ラベル。未チェック時は取り消し線＋淡色化 */}
-                        <label
-                          htmlFor={item.id}
-                          className="peer-not-data-[state=checked]:line-through peer-not-data-[state=checked]:text-muted-foreground/65 after:absolute after:inset-0"
-                        >
-                          {item.name}
-                        </label>
-                      </span>
+              {editableEtiquettes.map((item) => {
+                const isEditing = editingId === item.id;
+                return (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton
+                      asChild
+                      className="group relative rounded-md [&>svg]:size-auto justify-between has-focus-visible:border-ring has-focus-visible:ring-ring/50 has-focus-visible:ring-[3px]"
+                    >
+                      {/* ボタン内：チェックボックス + ラベル + 色ドット */}
+                      <span>
+                        <span className="font-medium flex items-center justify-between gap-3">
+                          {/* 視覚的にはアイコンでオン/オフ表示。入力は非表示の Checkbox が持つ */}
+                          <Checkbox
+                            id={item.id}
+                            className="sr-only peer"
+                            checked={isColorVisible(item.color)}
+                            onCheckedChange={() =>
+                              toggleColorVisibility(item.color)
+                            }
+                          />
+                          {/* チェック状態のときだけ表示するチェックアイコン */}
+                          <RiCheckLine
+                            className="peer-not-data-[state=checked]:invisible"
+                            size={16}
+                            aria-hidden="true"
+                          />
+                          {/* ラベル。未チェック時は取り消し線＋淡色化 */}
+                          {isEditing ? (
+                            <input
+                              type="text"
+                              value={editingName}
+                              onChange={(e) => setEditingName(e.target.value)}
+                              onBlur={saveEdit}
+                              onKeyDown={handleKeyPress}
+                              className="bg-transparent border-none outline-none text-sm font-medium"
+                              autoFocus
+                            />
+                          ) : (
+                            <label
+                              htmlFor={item.id}
+                              className="peer-not-data-[state=checked]:line-through peer-not-data-[state=checked]:text-muted-foreground/65 after:absolute after:inset-0 cursor-pointer"
+                            >
+                              {item.name}
+                            </label>
+                          )}
+                        </span>
 
-                      {/* カラードット：CSS 変数で色を注入（--color-<name>-400 を想定） */}
-                      <span
-                        className="size-1.5 rounded-full bg-(--event-color)"
-                        style={
-                          {
-                            "--event-color": `var(--color-${item.color}-400)`,
-                          } as React.CSSProperties
-                        }
-                      ></span>
-                    </span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
-              ))}
+                        {/* 編集ボタン（常時表示、スマホ対応）とカラードット */}
+                        <span className="flex items-center gap-2">
+                          {!isEditing && (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                e.stopPropagation();
+                                startEdit(item);
+                              }}
+                              className="opacity-60 hover:opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 p-2 hover:bg-sidebar-accent/80 rounded-md cursor-pointer relative -m-1"
+                              title="編集"
+                            >
+                              <RiPencilLine
+                                size={12}
+                                className="text-muted-foreground"
+                              />
+                            </button>
+                          )}
+                          {/* カラードット：CSS 変数で色を注入（--color-<name>-400 を想定） */}
+                          <span
+                            className="size-1.5 rounded-full bg-(--event-color) shrink-0"
+                            style={
+                              {
+                                "--event-color": `var(--color-${item.color}-400)`,
+                              } as React.CSSProperties
+                            }
+                          ></span>
+                        </span>
+                      </span>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                );
+              })}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
 
       {/* フッター：ユーザー情報 */}
-      <SidebarFooter>
+      {/* <SidebarFooter>
         <NavUser user={data.user} />
-      </SidebarFooter>
+      </SidebarFooter> */}
     </Sidebar>
   );
 }
