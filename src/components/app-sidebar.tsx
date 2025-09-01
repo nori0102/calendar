@@ -1,13 +1,13 @@
 "use client";
 
 import * as React from "react";
-import { useState, useEffect } from "react";
+import { useMemo, useCallback } from "react";
 import Link from "next/link";
 import { RiCheckLine, RiPencilLine } from "@remixicon/react";
 import { useCalendarContext } from "@/contexts/calendar-context";
+import { useEditableEtiquettes } from "@/hooks/use-editable-etiquettes";
 
 import { NavUser } from "@/components/nav-user";
-import { etiquettes } from "@/components/big-calendar";
 
 import {
   Sidebar,
@@ -24,6 +24,14 @@ import {
 } from "@/components/ui/sidebar";
 import SidebarCalendar from "@/components/sidebar-calendar";
 import { Checkbox } from "@/components/ui/checkbox";
+
+// 定数定義
+const ICON_SIZES = {
+  CHECK: 16,
+  EDIT: 12,
+  LOGO: 32,
+} as const;
+
 
 const data = {
   user: {
@@ -52,61 +60,16 @@ const data = {
  */
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const { isColorVisible, toggleColorVisibility } = useCalendarContext();
-
-  // 編集可能なetiquette名を管理
-  const [editableEtiquettes, setEditableEtiquettes] = useState(etiquettes);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [editingName, setEditingName] = useState("");
-
-  // LocalStorageから読み込み
-  useEffect(() => {
-    const saved = localStorage.getItem("editableEtiquettes");
-    if (saved) {
-      setEditableEtiquettes(JSON.parse(saved));
-    }
-  }, []);
-
-  // LocalStorageに保存
-  useEffect(() => {
-    localStorage.setItem(
-      "editableEtiquettes",
-      JSON.stringify(editableEtiquettes)
-    );
-  }, [editableEtiquettes]);
-
-  // 編集開始
-  const startEdit = (item: (typeof etiquettes)[0]) => {
-    setEditingId(item.id);
-    setEditingName(item.name);
-  };
-
-  // 編集保存
-  const saveEdit = () => {
-    if (editingId && editingName.trim()) {
-      setEditableEtiquettes((prev) =>
-        prev.map((item) =>
-          item.id === editingId ? { ...item, name: editingName.trim() } : item
-        )
-      );
-    }
-    setEditingId(null);
-    setEditingName("");
-  };
-
-  // 編集キャンセル
-  const cancelEdit = () => {
-    setEditingId(null);
-    setEditingName("");
-  };
-
-  // キー操作
-  const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter") {
-      saveEdit();
-    } else if (e.key === "Escape") {
-      cancelEdit();
-    }
-  };
+  const {
+    editableEtiquettes,
+    editingId,
+    editingName,
+    setEditingName,
+    startEdit,
+    saveEdit,
+    cancelEdit,
+    handleKeyPress,
+  } = useEditableEtiquettes();
 
   return (
     <Sidebar variant="inset" {...props} className="max-lg:p-3 lg:pe-1">
@@ -118,8 +81,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             {/* シンプルな SVG ロゴ（色は現行テーマの中間色に合わせている） */}
             <svg
               xmlns="http://www.w3.org/2000/svg"
-              width="32"
-              height="32"
+              width={ICON_SIZES.LOGO}
+              height={ICON_SIZES.LOGO}
               viewBox="0 0 32 32"
             >
               <path
@@ -173,7 +136,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                           {/* チェック状態のときだけ表示するチェックアイコン */}
                           <RiCheckLine
                             className="peer-not-data-[state=checked]:invisible"
-                            size={16}
+                            size={ICON_SIZES.CHECK}
                             aria-hidden="true"
                           />
                           {/* ラベル。未チェック時は取り消し線＋淡色化 */}
@@ -208,10 +171,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                                 startEdit(item);
                               }}
                               className="opacity-60 hover:opacity-100 lg:opacity-0 lg:group-hover:opacity-100 transition-all duration-200 p-2 hover:bg-sidebar-accent/80 rounded-md cursor-pointer relative -m-1"
-                              title="編集"
                             >
                               <RiPencilLine
-                                size={12}
+                                size={ICON_SIZES.EDIT}
                                 className="text-muted-foreground"
                               />
                             </button>
