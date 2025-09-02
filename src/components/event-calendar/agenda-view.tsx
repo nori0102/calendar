@@ -4,6 +4,7 @@ import { useMemo } from "react";
 import { RiCalendarEventLine } from "@remixicon/react";
 import { addDays, format, isToday } from "date-fns";
 import { ja } from "date-fns/locale";
+import { motion } from "framer-motion";
 
 import {
   AgendaDaysToShow,
@@ -103,7 +104,12 @@ export function AgendaView({
   );
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 ">
+    <motion.div 
+      className="px-4 sm:px-6 lg:px-8"
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      transition={{ duration: 0.3 }}
+    >
       {!hasEvents ? (
         /* イベントが存在しない場合の空状態表示 */
         <div
@@ -148,19 +154,30 @@ export function AgendaView({
 
               {/* その日のイベント一覧 */}
               <div className="mt-6 space-y-2">
-                {dayEvents.map((event) => (
-                  <EventItem
-                    key={event.id}
-                    event={event}
-                    view="agenda"
-                    onClick={(e) => handleEventClick(event, e)}
-                  />
+                {dayEvents.map((event, index) => (
+                  <motion.div
+                    key={`${event.id}-agenda-${index}`}
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 25,
+                      delay: index * 0.05
+                    }}
+                  >
+                    <EventItem
+                      event={event}
+                      view="agenda"
+                      onClick={(e) => handleEventClick(event, e)}
+                    />
+                  </motion.div>
                 ))}
               </div>
             </div>
           );
         })
       )}
-    </div>
+    </motion.div>
   );
 }

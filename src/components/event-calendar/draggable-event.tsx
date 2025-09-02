@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { useDraggable } from "@dnd-kit/core";
 import { CSS } from "@dnd-kit/utilities";
 import { differenceInDays } from "date-fns";
+import { motion, AnimatePresence } from "framer-motion";
 
 import {
   CalendarEvent,
@@ -91,6 +92,9 @@ export function DraggableEvent({
   const isMultiDayEvent =
     isMultiDay || event.allDay || differenceInDays(eventEnd, eventStart) >= 1;
 
+  // 祝日判定
+  const isHolidayEvent = event.id.startsWith('holiday-');
+
   // Draggable 設定：ドロップ側が参照する data をここで集約
   const { attributes, listeners, setNodeRef, transform, isDragging } =
     useDraggable({
@@ -121,10 +125,17 @@ export function DraggableEvent({
   // DnD 中は実体を透明化し、Overlay の表示に任せる
   if (isDragging || activeId === `${event.id}-${view}`) {
     return (
-      <div
+      <motion.div
         ref={setNodeRef}
         className="opacity-0"
         style={{ height: height || "auto" }}
+        initial={{ scale: 1 }}
+        animate={{ scale: 0.95 }}
+        transition={{
+          type: "spring",
+          stiffness: 400,
+          damping: 25
+        }}
       />
     );
   }
@@ -158,13 +169,38 @@ export function DraggableEvent({
   };
 
   return (
-    <div
+    <motion.div
       ref={(node) => {
         setNodeRef(node);
         if (elementRef) elementRef.current = node;
       }}
       style={style}
       className="touch-none"
+      layout
+      initial={{ opacity: 0, scale: 0.9 }}
+      animate={{ opacity: 1, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      whileHover={!isHolidayEvent ? { 
+        scale: 1.02,
+        transition: { type: "spring", stiffness: 400, damping: 25 }
+      } : undefined}
+      whileTap={!isHolidayEvent ? { 
+        scale: 0.98,
+        transition: { type: "spring", stiffness: 400, damping: 25 }
+      } : undefined}
+      drag={false} // @dnd-kitに任せるのでframer-motionのdragは無効
+      transition={{
+        layout: {
+          type: "spring",
+          stiffness: 400,
+          damping: 30
+        },
+        default: {
+          type: "spring",
+          stiffness: 300,
+          damping: 25
+        }
+      }}
     >
       <EventItem
         event={event}
@@ -180,6 +216,6 @@ export function DraggableEvent({
         dndAttributes={attributes}
         aria-hidden={ariaHidden}
       />
-    </div>
+    </motion.div>
   );
 }

@@ -5,6 +5,7 @@ import type { DraggableAttributes } from "@dnd-kit/core";
 import type { SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { differenceInMinutes, format, getMinutes, isPast } from "date-fns";
 import { Calendar } from "lucide-react";
+import { motion } from "framer-motion";
 
 import {
   getBorderRadiusClasses,
@@ -114,7 +115,7 @@ function EventWrapper({
   };
 
   return (
-    <button
+    <motion.button
       className={cn(
         "focus-visible:border-ring focus-visible:ring-ring/50 flex h-full w-full overflow-hidden px-1 text-left font-medium backdrop-blur-md transition outline-none select-none focus-visible:ring-[3px] data-dragging:cursor-grabbing data-dragging:shadow-lg sm:px-2",
         !isHoliday && "data-past-event:line-through",
@@ -130,9 +131,18 @@ function EventWrapper({
       onTouchStart={handleTouchStart}
       {...(isHoliday ? {} : dndListeners)}
       {...(isHoliday ? {} : dndAttributes)}
+      whileHover={!isHoliday ? {
+        scale: 1.02,
+        boxShadow: "0 4px 8px rgba(0, 0, 0, 0.1)",
+        transition: { type: "spring", stiffness: 400, damping: 25 }
+      } : undefined}
+      whileTap={!isHoliday ? {
+        scale: 0.98,
+        transition: { type: "spring", stiffness: 400, damping: 25 }
+      } : undefined}
     >
       {children}
-    </button>
+    </motion.button>
   );
 }
 
@@ -343,7 +353,7 @@ export function EventItem({
   };
 
   return (
-    <button
+    <motion.button
       className={cn(
         "focus-visible:border-ring focus-visible:ring-ring/50 flex w-full flex-col gap-1 rounded p-2 text-left transition outline-none focus-visible:ring-[3px] data-past-event:opacity-90",
         !isHoliday && "data-past-event:line-through",
@@ -383,6 +393,6 @@ export function EventItem({
       {event.description && (
         <div className="my-1 text-xs opacity-90">{event.description}</div>
       )}
-    </button>
+    </motion.button>
   );
 }

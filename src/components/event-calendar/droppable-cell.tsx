@@ -1,6 +1,7 @@
 "use client";
 
 import { useDroppable } from "@dnd-kit/core";
+import { motion } from "framer-motion";
 
 import { cn } from "@/lib/utils";
 import { useCalendarDnd } from "@/components/event-calendar";
@@ -77,18 +78,31 @@ export function DroppableCell({
       : null;
 
   return (
-    <div
+    <motion.div
       ref={setNodeRef}
       onClick={onClick}
       className={cn(
         // ホバー中は data-dragging でトーンを上げる想定
-        "data-dragging:bg-accent flex h-full flex-col px-0.5 py-1 sm:px-1",
+        "data-dragging:bg-accent flex h-full flex-col px-0.5 py-1 sm:px-1 transition-colors",
         className
       )}
       title={formattedTime ?? undefined}
       data-dragging={isOver && activeEvent ? true : undefined}
+      animate={{
+        backgroundColor: isOver && activeEvent ? "rgba(var(--accent), 0.1)" : "transparent",
+        scale: isOver && activeEvent ? 1.02 : 1,
+      }}
+      transition={{
+        type: "spring",
+        stiffness: 400,
+        damping: 25
+      }}
+      whileHover={{
+        backgroundColor: "rgba(var(--accent), 0.05)",
+        transition: { duration: 0.2 }
+      }}
     >
       {children}
-    </div>
+    </motion.div>
   );
 }

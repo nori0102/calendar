@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
+import { AnimatePresence } from "framer-motion";
 import { useCalendarContext } from "@/contexts/calendar-context";
 import { useHolidays } from "@/hooks/use-holidays";
 import { useLocalStorage } from "@/hooks/use-local-storage";
@@ -20,27 +21,27 @@ import {
  */
 export const etiquettes = [
   {
-    id: "my-events",
-    name: "個人的なイベント",
+    id: "work",
+    name: "仕事",
+    color: "blue" as EventColor,
+    isActive: true,
+  },
+  {
+    id: "personal",
+    name: "プライベート",
     color: "emerald" as EventColor,
     isActive: true,
   },
   {
-    id: "marketing-team",
-    name: "マーケティング",
+    id: "meetings",
+    name: "会議・打ち合わせ",
     color: "orange" as EventColor,
     isActive: true,
   },
   {
-    id: "interviews",
-    name: "面接",
+    id: "important",
+    name: "重要",
     color: "violet" as EventColor,
-    isActive: true,
-  },
-  {
-    id: "events-planning",
-    name: "イベント企画",
-    color: "blue" as EventColor,
     isActive: true,
   },
 ];
@@ -126,12 +127,15 @@ export default function Component() {
   };
 
   return (
-    <EventCalendar
-      events={visibleEvents}
-      onEventAdd={handleEventAdd}
-      onEventUpdate={handleEventUpdate}
-      onEventDelete={handleEventDelete}
-      initialView="week" // 初期表示は週ビュー
-    />
+    <AnimatePresence mode="wait">
+      <EventCalendar
+        key="event-calendar"
+        events={visibleEvents}
+        onEventAdd={handleEventAdd}
+        onEventUpdate={handleEventUpdate}
+        onEventDelete={handleEventDelete}
+        initialView="week" // 初期表示は週ビュー
+      />
+    </AnimatePresence>
   );
 }
