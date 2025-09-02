@@ -10,6 +10,22 @@ interface UseEventHandlersProps {
   onEventDelete?: (eventId: string) => void;
 }
 
+/**
+ * カレンダーイベントの操作ハンドラーを提供するカスタムフック
+ * 
+ * @param params - イベント操作に必要なプロパティ
+ * @returns イベントの作成・編集・削除のハンドラー群
+ * 
+ * @example
+ * ```tsx
+ * const { handleEventSelect, handleEventSave, handleEventDelete } = useEventHandlers({
+ *   events,
+ *   onEventAdd,
+ *   onEventUpdate,
+ *   onEventDelete
+ * });
+ * ```
+ */
 export function useEventHandlers({
   events,
   onEventAdd,

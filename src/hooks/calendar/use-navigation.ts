@@ -7,6 +7,21 @@ interface UseNavigationProps {
   view: CalendarView;
 }
 
+/**
+ * カレンダーナビゲーション機能を提供するカスタムフック
+ * 
+ * @param params - ナビゲーションに必要なプロパティ
+ * @returns 前へ・次へ・今日へのナビゲーション関数
+ * 
+ * @example
+ * ```tsx
+ * const { handlePrevious, handleNext, handleToday } = useNavigation({
+ *   currentDate,
+ *   setCurrentDate,
+ *   view: 'month'
+ * });
+ * ```
+ */
 export function useNavigation({ currentDate, setCurrentDate, view }: UseNavigationProps) {
   const handlePrevious = () => {
     if (view === "month") setCurrentDate(subMonths(currentDate, 1));

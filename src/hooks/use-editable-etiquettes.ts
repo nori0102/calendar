@@ -11,6 +11,16 @@ interface EditableEtiquette {
   isActive: boolean;
 }
 
+/**
+ * エチケット（カラーラベル）の編集機能を提供するカスタムフック
+ * 
+ * @returns エチケット編集に必要な状態と関数群
+ * 
+ * @example
+ * ```tsx
+ * const { editableEtiquettes, startEdit, saveEdit } = useEditableEtiquettes();
+ * ```
+ */
 export function useEditableEtiquettes() {
   const [editableEtiquettes, setEditableEtiquettes] = useState<EditableEtiquette[]>(etiquettes);
   const [editingId, setEditingId] = useState<string | null>(null);

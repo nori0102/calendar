@@ -49,7 +49,12 @@ interface RequestBody {
 // レート制限用のメモリストア（本番では Redis 推奨）
 const rateLimitStore = new Map<string, number[]>();
 
-// レート制限チェック（IP単位で1分間に5回まで）
+/**
+ * レート制限チェック（IP単位で1分間に5回まで）
+ * 
+ * @param ip - クライアントのIPアドレス
+ * @returns 制限内であればtrue、制限を超えていればfalse
+ */
 function checkRateLimit(ip: string): boolean {
   const now = Date.now();
   const windowMs = 60 * 1000; // 1分
@@ -75,7 +80,12 @@ function checkRateLimit(ip: string): boolean {
   return true;
 }
 
-// 入力値検証
+/**
+ * 入力値検証
+ * 
+ * @param body - リクエストボディ
+ * @returns 検証済みのリクエストデータまたはnull
+ */
 function validateInput(body: RequestBody): SuggestionRequest | null {
   const { date, startTime, endTime, location, customLocation } = body;
 
@@ -115,7 +125,13 @@ function validateInput(body: RequestBody): SuggestionRequest | null {
   };
 }
 
-// 場所コンテキスト生成
+/**
+ * 場所コンテキスト生成
+ * 
+ * @param location - 場所の種類
+ * @param customLocation - カスタム場所（任意）
+ * @returns 場所に応じたコンテキスト文字列
+ */
 function getLocationContext(location: string, customLocation?: string): string {
   const contexts = {
     home: '自宅・家の中',
@@ -130,7 +146,12 @@ function getLocationContext(location: string, customLocation?: string): string {
   return contexts[location as keyof typeof contexts] || 'どこでも';
 }
 
-// 時間コンテキスト生成
+/**
+ * 時間コンテキスト生成
+ * 
+ * @param hour - 時間（0-23）
+ * @returns 時間帯に応じたコンテキスト文字列
+ */
 function getTimeContext(hour: number): string {
   if (hour >= 6 && hour < 12) return '朝';
   if (hour >= 12 && hour < 17) return '昼';
@@ -138,7 +159,13 @@ function getTimeContext(hour: number): string {
   return '深夜・早朝';
 }
 
-// カテゴリ自動判定
+/**
+ * カテゴリ自動判定
+ * 
+ * @param title - イベントタイトル
+ * @param description - イベント説明
+ * @returns 判定されたカテゴリ
+ */
 function determineCategory(title: string, description: string): SuggestionResponse['category'] {
   const text = `${title} ${description}`.toLowerCase();
 
@@ -158,6 +185,12 @@ function determineCategory(title: string, description: string): SuggestionRespon
   return 'relax';
 }
 
+/**
+ * AI予定提案APIのエンドポイント
+ * 
+ * @param request - Next.jsリクエストオブジェクト
+ * @returns AI提案またはモック提案のレスポンス
+ */
 export async function POST(request: NextRequest) {
   try {
     // IP取得（プロキシ対応）
