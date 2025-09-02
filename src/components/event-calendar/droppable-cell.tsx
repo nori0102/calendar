@@ -89,7 +89,7 @@ export function DroppableCell({
       title={formattedTime ?? undefined}
       data-dragging={isOver && activeEvent ? true : undefined}
       animate={{
-        backgroundColor: isOver && activeEvent ? "rgba(var(--accent), 0.1)" : "transparent",
+        backgroundColor: isOver && activeEvent ? "rgba(var(--accent), 0.1)" : "rgba(0, 0, 0, 0)",
         scale: isOver && activeEvent ? 1.02 : 1,
       }}
       transition={{
