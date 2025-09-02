@@ -456,9 +456,7 @@ export function AISuggestionDialog({
                       ))}
                     </SelectContent>
                   </Select>
-                  <Badge variant="outline" className="ml-2">
-                    {getDuration()}
-                  </Badge>
+
                 </div>
               </div>
 
