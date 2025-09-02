@@ -1,46 +1,25 @@
-import { Button } from "@/components/ui/button";
-import { ArrowUpRight, CirclePlus } from "lucide-react";
-import Image from "next/image";
-import Link from "next/link";
 
-export default function Home() {
-  return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="max-w-screen-xl w-full mx-auto grid lg:grid-cols-2 gap-12 px-6 py-12">
-        <div>
-          <h1 className="mt-6 max-w-[17ch] text-4xl md:text-5xl lg:text-[2.75rem] xl:text-5xl font-bold !leading-[1.2]">
-            Customized Shadcn UI Blocks & Components
-          </h1>
-          <p className="mt-6 max-w-[60ch] text-lg">
-            Explore a collection of Shadcn UI blocks and components, ready to
-            preview and copy. Streamline your development workflow with
-            easy-to-implement examples.
-          </p>
-          <div className="mt-12 flex items-center justify-center gap-12">
-            <Link href="/calendar">
-              <Button size="lg" className="rounded-full text-base">
-                今すぐつかってみる <ArrowUpRight className="!h-5 !w-5" />
-              </Button>
-            </Link>
-            <Button
-              variant="outline"
-              size="lg"
-              className="rounded-full text-base shadow-none"
-            >
-              <CirclePlus className="!h-5 !w-5" /> アカウント作成
-            </Button>
-          </div>
-        </div>
-        <div className="relative w-full h-[320px] sm:h-[420px] md:h-[520px]">
-          <Image
-            src="/hero1.svg"
-            alt="Hero Image"
-            fill
-            priority
-            className="object-cover"
-          />
-        </div>
-      </div>
+import { AppSidebar } from "@/components/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import dynamic from "next/dynamic";
+
+const BigCalendar = dynamic(() => import("@/components/big-calendar"), {
+  loading: () => (
+    <div className="flex items-center justify-center h-96">
+      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
     </div>
+  ),
+});
+
+export default function Page() {
+  return (
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <div className="flex flex-1 flex-col gap-4 p-2 pt-0">
+          <BigCalendar />
+        </div>
+      </SidebarInset>
+    </SidebarProvider>
   );
 }
