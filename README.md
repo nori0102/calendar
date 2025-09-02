@@ -40,8 +40,6 @@ OPENAI_API_KEY=sk-xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 npm run dev
 ```
 
-ブラウザで http://localhost:3000 を開いてアプリを使用できます。
-
 ## AI 予定提案機能の使い方
 
 1. カレンダー上の空きスロットをクリック
@@ -123,14 +121,14 @@ src/
 
 ## 主要な機能とファイル
 
-| 機能 | 主なファイル |
-|------|-------------|
-| カレンダー表示 | `components/event-calendar/` |
-| イベント管理 | `hooks/calendar/use-event-handlers.ts` |
-| AI予定提案 | `app/api/suggest-events/route.ts` |
-| 祝日表示 | `hooks/use-holidays.ts` |
-| ドラッグ&ドロップ | `contexts/calendar-dnd-context.tsx` |
-| データ永続化 | `hooks/use-local-storage.ts` |
+| 機能              | 主なファイル                           |
+| ----------------- | -------------------------------------- |
+| カレンダー表示    | `components/event-calendar/`           |
+| イベント管理      | `hooks/calendar/use-event-handlers.ts` |
+| AI 予定提案       | `app/api/suggest-events/route.ts`      |
+| 祝日表示          | `hooks/use-holidays.ts`                |
+| ドラッグ&ドロップ | `contexts/calendar-dnd-context.tsx`    |
+| データ永続化      | `hooks/use-local-storage.ts`           |
 
 ## 開発時のコマンド
 
